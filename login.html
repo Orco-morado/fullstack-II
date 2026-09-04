@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Gas La Chispa - Iniciar Sesion</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  
+  <style>  
+    body {
+      background-color: #f5f5f5;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+    }
+    
+    .login-container {
+      width: 100%;
+      max-width: 350px;
+      margin: 60px auto;
+      padding: 30px;
+      background-color: rgba(255, 255, 255, 0.95);
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    
+    .login-title {
+      text-align: center;
+      margin-bottom: 25px;
+      font-weight: bold;
+    }
+    
+    .login-button {
+      background-color: #ffc107; /* Amarillo para Gas La Chispa */
+      color: black;
+      border: none;
+      border-radius: 8px;
+      padding: 12px;
+      font-weight: bold;
+      width: 100%;
+    }
+
+    .login-button:hover {
+      background-color: #e0a800;
+    }
+
+    .back-arrow {
+      display: inline-block;
+      margin-bottom: 15px;
+      font-size: 1.5rem;
+      color: #000;
+      text-decoration: none;
+    }
+    
+    .back-arrow span {
+      vertical-align: middle;
+      margin-left: 6px;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="login-container">
+    <a href="index.html" class="back-arrow" title="Volver a inicio">&#8592; <span>Volver</span></a>
+    
+    <h2 class="text-center text-warning fw-bold mb-2"> Gas La Chispa</h2>
+    <h4 class="login-title">Inicio de Sesion</h4>
+    
+    <!-- Se añade el ID 'loginForm' para capturarlo en JavaScript -->
+    <form id="loginForm" novalidate>
+      <div class="form-group">
+        <label for="usuarioEmail">Correo electronico</label>
+        <input type="email" class="form-control" id="usuarioEmail" placeholder="Tu Email">
+        <!-- Contenedor para inyectar el error de JS -->
+        <div id="emailError" class="text-danger small mt-1"></div>
+      </div>
+      
+      <div class="form-group">
+        <label for="usuarioPassword">Contraseña</label>
+        <input type="password" class="form-control" id="usuarioPassword" placeholder="Tu Contraseña">
+        <!-- Contenedor para inyectar el error de JS -->
+        <div id="passwordError" class="text-danger small mt-1"></div>
+      </div>
+      
+      <button type="submit" class="login-button">Ingresar</button>
+    </form>
+    
+    <div class="text-center mt-4">
+      ¿Primera vez aqui? <a href="registro.html">Registrate</a>
+    </div>
+  </div>
+
+  <!-- Script con las validaciones de negocio -->
+  <script src="js/main.js"></script>
+</body>
+</html>
