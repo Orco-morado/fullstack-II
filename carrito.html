@@ -11,11 +11,11 @@
 </head>
 <body>
 
-    <!-- MENÚ DE NAVEGACIÓN -->
+    <!-- MENU DE NAVEGACION -->
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
             <div class="container">
-                <a class="navbar-brand text-warning fw-bold" href="index.html">🔥 Gas La Chispa</a>
+                <a class="navbar-brand text-warning fw-bold" href="index.html"> Gas La Chispa</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                     <span class="navbar-toggler-icon"></span>
                 </button>
@@ -47,7 +47,7 @@
         <div class="row">
             <!-- Columna Izquierda: Lista de Productos -->
             <div class="col-md-8" id="lista-carrito">
-                <!-- Se llenará con JavaScript -->
+
                 <div class="alert alert-info">Cargando productos...</div>
             </div>
             
@@ -65,8 +65,8 @@
                             <button class="btn btn-outline-secondary" type="button">APLICAR</button>
                         </div>
                         
-                        <button class="btn btn-warning w-100 fw-bold btn-lg">PAGAR AHORA</button>
-                        <p class="text-center text-muted small mt-3 mb-0">Pago seguro garantizado</p>
+                        <button class="btn btn-warning w-100 fw-bold btn-lg">Solicitud de compra </button>
+                        <p class="text-center text-muted small mt-3 mb-0">el pago por normas de seguridad se realiza de forma precencial o al recibir lo solicitado</p>
                     </div>
                 </div>
             </div>
@@ -100,7 +100,7 @@
     <!-- Archivo JS externo -->
     <script src="js/main.js"></script>
 
-    <!-- Lógica de pintado de la vista Carrito -->
+    <!-- Logica de pintado de la vista Carrito -->
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const listaCarrito = document.getElementById("lista-carrito");
@@ -116,7 +116,7 @@
                 if (carritoActual.length === 0) {
                     listaCarrito.innerHTML = `
                         <div class="alert alert-warning text-center">
-                            Tu carrito está vacío. <br> <a href="productos.html" class="btn btn-sm btn-dark mt-2">Volver a la tienda</a>
+                            Tu carrito está vacío. <br> <a href="index.html" class="btn btn-sm btn-dark mt-2">Volver a la tienda</a>
                         </div>
                     `;
                     totalCarrito.textContent = "$ 0";
@@ -157,7 +157,7 @@
                 totalCarrito.textContent = `$ ${total.toLocaleString('es-CL')}`;
             }
 
-            // Función global para que los botones interactúen
+            // Funcion global para que los botones interactuen
             window.modificarCantidad = function(id, modificador) {
                 const index = carritoActual.findIndex(p => p.id === id);
                 if (index !== -1) {

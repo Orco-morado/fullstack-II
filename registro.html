@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gas La Chispa - Registro</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      min-height: 100vh;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 0;
+    }
+
+    .back-arrow {
+      color: black;
+      text-decoration: none;
+      font-size: 1.1rem;
+      padding-left: 10px;
+    }
+
+    .back-arrow:hover {
+      color: gray;
+    }
+    
+    .btn-warning {
+      background-color: #ffc107;
+      color: black;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navegación Minimalista -->
+  <nav class="navbar navbar-light bg-light shadow-sm">
+    <a href="index.html" class="back-arrow" title="Volver a inicio">&#8592; Volver al inicio</a>
+    <span class="navbar-brand mb-0 h1 mx-auto text-warning fw-bold">🔥 Gas La Chispa</span>
+  </nav>
+
+  <div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+      <div class="col-lg-8 col-md-10 col-sm-12">
+        <div class="card shadow">
+          <div class="card-body p-4">
+            <h3 class="card-title text-center mb-4">Registro de Usuario</h3>
+            
+            <!-- Formulario (Sin JS, usando validaciones HTML5) -->
+            <form action="#" method="POST">
+              
+              <!-- RUN -->
+              <div class="form-group mb-3">
+                <label for="run">RUN</label>
+                <input type="text" class="form-control" id="run" required minlength="7" maxlength="9" placeholder="19011022K (Sin puntos ni guion)">
+              </div>
+
+              <!-- Nombres y Apellidos -->
+              <div class="row">
+                <div class="col-md-6 form-group mb-3">
+                  <label for="nombre">Nombre</label>
+                  <input type="text" class="form-control" id="nombre" required maxlength="50" placeholder="Sus nombres">
+                </div>
+                <div class="col-md-6 form-group mb-3">
+                  <label for="apellidos">Apellidos</label>
+                  <input type="text" class="form-control" id="apellidos" required maxlength="100" placeholder="Sus apellidos">
+                </div>
+              </div>
+
+              <!-- Correo -->
+              <div class="form-group mb-3">
+                <label for="email">Correo electrónico</label>
+                <input type="email" class="form-control" id="email" required maxlength="100" placeholder="ejemplo@correo.com">
+              </div>
+
+              <!-- Contraseña -->
+              <div class="row">
+                <div class="col-md-6 form-group mb-3">
+                  <label for="contrasena">Contraseña</label>
+                  <input type="password" class="form-control" id="contrasena" required minlength="4" maxlength="10">
+                </div>
+                <div class="col-md-6 form-group mb-3">
+                  <label for="confirmar_contrasena">Confirmar Contraseña</label>
+                  <input type="password" class="form-control" id="confirmar_contrasena" required minlength="4" maxlength="10">
+                </div>
+              </div>
+
+              <!-- Región y Comuna (Mockup) -->
+              <div class="row">
+                <div class="col-md-6 form-group mb-3">
+                  <label for="region">Seleccione la región</label>
+                  <select class="form-control" id="region" required>
+                    <option value="">Seleccione...</option>
+                    <option value="RM">Región Metropolitana</option>
+                    <option value="Nuble">Región de Ñuble</option>
+                    <option value="BioBio">Región del Biobío</option>
+                  </select>
+                </div>
+                <div class="col-md-6 form-group mb-3">
+                  <label for="comuna">Seleccione la comuna</label>
+                  <select class="form-control" id="comuna" required>
+                    <option value="">Seleccione...</option>
+                    <option value="Chillan">Chillán</option>
+                    <option value="ChillanViejo">Chillán Viejo</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Dirección -->
+              <div class="form-group mb-4">
+                <label for="direccion">Dirección exacta</label>
+                <input type="text" class="form-control" id="direccion" required maxlength="300" placeholder="Calle, número, depto">
+              </div>
+
+              <!-- Botón -->
+              <div class="text-center mt-4">
+                <button type="submit" class="btn btn-warning btn-lg w-100">Registrar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

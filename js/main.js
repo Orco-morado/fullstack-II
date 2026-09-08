@@ -1,8 +1,6 @@
 document.addEventListener("DOMContentLoaded", function() {
 
-    // ==========================================
-    // 1. GESTIÓN DEL CATÁLOGO DE PRODUCTOS (INDEX)
-    // ==========================================
+    //  GESTIÓN DEL CATÁLOGO DE PRODUCTOS (INDEX)
     const productosGas = [
         { id: 'CL001', nombre: 'Cilindro 5 kg', desc: 'Ideal para estufas pequeñas', precio: 6500, img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQoe4VQoRhPj4pnXVzeMl7dfOL_t0bSW9E7JPCUWHix0w&s=10' },
         { id: 'CL002', nombre: 'Cilindro 11 kg', desc: 'El clásico para hogar', precio: 12000, img: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT3yhfKiRlMS5LKhPyFcbW4Yi5tR997lJt8xglXm9CFiw&s=10' },
@@ -43,9 +41,8 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
-    // ==========================================
-    // 2. LÓGICA DEL CARRITO (LOCALSTORAGE)
-    // ==========================================
+    // LÓGICA DEL CARRITO (LOCALSTORAGE)
+  
     window.agregarAlCarrito = function(id) {
         const productoSel = productosGas.find(p => p.id === id);
         const existe = carritoActual.find(item => item.id === id);
@@ -69,9 +66,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
-    // ==========================================
-    // 3. VALIDACIONES DEL FORMULARIO DE LOGIN
-    // ==========================================
+    //  VALIDACIONES DEL FORMULARIO DE LOGIN
     const loginForm = document.getElementById("loginForm");
     
     if (loginForm) {
@@ -115,7 +110,6 @@ document.addEventListener("DOMContentLoaded", function() {
             
             if (isValid) {
                 alert("Validación exitosa. Simulando inicio de sesión...");
-                // window.location.href = "admin.html";
             }
         });
     }

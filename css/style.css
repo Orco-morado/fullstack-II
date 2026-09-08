@@ -1,6 +1,4 @@
-/* =========================================
-   Variables y Configuración General
-   ========================================= */
+/*  Variables y Configuración General */
 :root {
     --color-chispa: #ffc107;
     --color-chispa-hover: #e0a800;
@@ -12,9 +10,7 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* =========================================
-   Barra de Navegación (Navbar)
-   ========================================= */
+/*   Barra de Navegación (Navbar) */
 .navbar {
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
@@ -28,9 +24,7 @@ body {
     transform: scale(1.1);
 }
 
-/* =========================================
-   Tarjetas de Productos (Catálogo)
-   ========================================= */
+/* Tarjetas de Productos (Catálogo) */
 .custom-card {
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     border: none;
@@ -49,9 +43,8 @@ body {
     padding: 15px;
 }
 
-/* =========================================
-   Botones Personalizados
-   ========================================= */
+/*   Botones Personalizados*/
+
 .btn-warning {
     background-color: var(--color-chispa);
     border: none;
@@ -68,9 +61,7 @@ body {
     transform: scale(0.98);
 }
 
-/* =========================================
-   Ajustes para la vista de Carrito
-   ========================================= */
+/* Ajustes para la vista de Carrito*/
 #lista-carrito .card {
     transition: background-color 0.2s ease;
 }
@@ -79,9 +70,7 @@ body {
     background-color: #fcfcfc;
 }
 
-/* =========================================
-   Footer
-   ========================================= */
+/*  Footer "pie de pagina" */
 footer form input {
     border-radius: 5px 0 0 5px;
 }
