@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gas La Chispa - Hacer Pedido</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+            <div class="container">
+                <a class="navbar-brand text-warning fw-bold" href="index.html">🔥 Gas La Chispa</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                        <li class="nav-item"><a class="nav-link" href="productos.html">Productos</a></li>
+                        <li class="nav-item"><a class="nav-link active text-warning fw-bold" href="pedido.html">Hacer Pedido</a></li>
+                        <li class="nav-item"><a class="nav-link" href="seguimiento.html">Mi Pedido</a></li>
+                        <li class="nav-item"><a class="nav-link" href="login.html">Iniciar sesión</a></li>
+                        <li class="nav-item">
+                            <a class="nav-link text-warning fw-bold" href="carrito.html">
+                                🛒 Cart (<span id="cart-count">0</span>)
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container my-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <h2 class="fw-bold mb-2">Hacer un Pedido</h2>
+                <p class="text-muted mb-4">Completa los datos y te entregamos el gas a domicilio</p>
+
+                <!-- Barra de pasos -->
+                <ul class="nav nav-pills nav-justified mb-4" id="pasos">
+                    <li class="nav-item"><a class="nav-link active" href="#">1. Datos</a></li>
+                    <li class="nav-item"><a class="nav-link disabled" href="#">2. Producto</a></li>
+                    <li class="nav-item"><a class="nav-link disabled" href="#">3. Confirmar</a></li>
+                </ul>
+
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-4">
+                        <form id="formPedido">
+                            <!-- Datos del cliente -->
+                            <h5 class="fw-bold mb-3">Tus datos</h5>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label for="nombreCliente" class="form-label">Nombre completo *</label>
+                                    <input type="text" class="form-control" id="nombreCliente" required maxlength="100" placeholder="Ej: María Rojas">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="fonoCliente" class="form-label">Teléfono *</label>
+                                    <input type="tel" class="form-control" id="fonoCliente" required maxlength="15" placeholder="+56 9 1234 5678">
+                                </div>
+                                <div class="col-12">
+                                    <label for="emailCliente" class="form-label">Correo electrónico</label>
+                                    <input type="email" class="form-control" id="emailCliente" maxlength="100" placeholder="Para recibir confirmación (opcional)">
+                                </div>
+                            </div>
+
+                            <!-- Dirección -->
+                            <h5 class="fw-bold mb-3">Dirección de entrega</h5>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label for="region" class="form-label">Región *</label>
+                                    <select class="form-select" id="region" required>
+                                        <option value="Nuble">Región de Ñuble</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="comuna" class="form-label">Comuna *</label>
+                                    <select class="form-select" id="comuna" required>
+                                        <option value="">Seleccione...</option>
+                                        <option value="Chillan">Chillán</option>
+                                        <option value="ChillanViejo">Chillán Viejo</option>
+                                        <option value="SanNicolas">San Nicolás</option>
+                                        <option value="Pinto">Pinto</option>
+                                        <option value="Coihueco">Coihueco</option>
+                                        <option value="Niquen">Ñiquén</option>
+                                        <option value="SanCarlos">San Carlos</option>
+                                        <option value="SanFabian">San Fabián</option>
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <label for="direccion" class="form-label">Dirección exacta *</label>
+                                    <input type="text" class="form-control" id="direccion" required maxlength="300" placeholder="Calle, número, depto, referencias">
+                                    <div class="form-text">Ej: Av. Argentina 123, depto 4B, al lado del colegio</div>
+                                </div>
+                                <div class="col-12">
+                                    <label for="referencia" class="form-label">Referencia adicional</label>
+                                    <input type="text" class="form-control" id="referencia" maxlength="200" placeholder="Color de la casa, portón, etc.">
+                                </div>
+                            </div>
+
+                            <!-- Producto -->
+                            <h5 class="fw-bold mb-3">Tipo de cilindro *</h5>
+                            <div class="row g-3 mb-4" id="cilindros-opciones">
+                                <div class="col-6 col-md-3">
+                                    <input type="radio" class="btn-check" name="cilindro" id="cil5" value="5" required>
+                                    <label class="btn btn-outline-warning w-100 h-100 p-3 text-center" for="cil5">
+                                        <div class="fw-bold fs-4">5 kg</div>
+                                        <small class="d-block">Estufa pequeña</small>
+                                        <div class="fw-bold text-success mt-1">$ 11.500</div>
+                                    </label>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <input type="radio" class="btn-check" name="cilindro" id="cil11" value="11">
+                                    <label class="btn btn-outline-warning w-100 h-100 p-3 text-center" for="cil11">
+                                        <div class="fw-bold fs-4">11 kg</div>
+                                        <small class="d-block">Hogar estándar</small>
+                                        <div class="fw-bold text-success mt-1">$ 20.000</div>
+                                    </label>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <input type="radio" class="btn-check" name="cilindro" id="cil15" value="15">
+                                    <label class="btn btn-outline-warning w-100 h-100 p-3 text-center" for="cil15">
+                                        <div class="fw-bold fs-4">15 kg</div>
+                                        <small class="d-block">Familia grande</small>
+                                        <div class="fw-bold text-success mt-1">$ 27.000</div>
+                                    </label>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <input type="radio" class="btn-check" name="cilindro" id="cil45" value="45">
+                                    <label class="btn btn-outline-warning w-100 h-100 p-3 text-center" for="cil45">
+                                        <div class="fw-bold fs-4">45 kg</div>
+                                        <small class="d-block">Comercial</small>
+                                        <div class="fw-bold text-success mt-1">$ 60.000</div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Cantidad -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-4">
+                                    <label for="cantidad" class="form-label">Cantidad *</label>
+                                    <input type="number" class="form-control" id="cantidad" min="1" max="20" value="1" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="horario" class="form-label">Horario preferido</label>
+                                    <select class="form-select" id="horario">
+                                        <option value="mañana">Mañana (8:00 - 12:00)</option>
+                                        <option value="tarde" selected>Tarde (14:00 - 18:00)</option>
+                                        <option value="indiferente">Indiferente</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="pago" class="form-label">Forma de pago *</label>
+                                    <select class="form-select" id="pago" required>
+                                        <option value="efectivo">Efectivo al recibir</option>
+                                        <option value="transferencia">Transferencia al recibir</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Observaciones -->
+                            <div class="mb-4">
+                                <label for="obs" class="form-label">Observaciones</label>
+                                <textarea class="form-control" id="obs" rows="2" maxlength="300" placeholder="Algún detalle importante para el repartidor"></textarea>
+                            </div>
+
+                            <!-- Términos -->
+                            <div class="form-check mb-4">
+                                <input class="form-check-input" type="checkbox" id="terminos" required>
+                                <label class="form-check-label" for="terminos">
+                                    Acepto los <a href="#">términos y condiciones</a> y la <a href="#">política de privacidad</a> *
+                                </label>
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="productos.html" class="btn btn-outline-secondary me-md-2">Seguir comprando</a>
+                                <button type="submit" class="btn btn-warning fw-bold btn-lg">Confirmar Pedido</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Resumen flotante (desktop) -->
+                <div class="card shadow-sm border-warning mt-4 d-none d-lg-block">
+                    <div class="card-body">
+                        <h6 class="fw-bold mb-2">Resumen del pedido</h6>
+                        <div id="resumen-pedido">
+                            <p class="text-muted mb-0">Selecciona un cilindro para ver el resumen</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container text-center">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <h4 class="text-warning">Gas La Chispa</h4>
+                    <p class="small">Distribución rápida y segura.</p>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <a href="#" class="text-white text-decoration-none d-block">Términos y condiciones</a>
+                </div>
+                <div class="col-md-4">
+                    <p class="mb-2">Mantente en contacto</p>
+                    <form action="#" method="POST" class="d-flex justify-content-center">
+                        <input type="email" class="form-control w-50 me-2" placeholder="Ingresa tu correo" required>
+                        <button type="submit" class="btn btn-warning">Suscribirse</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/pedido.js"></script>
+</body>
+</html>

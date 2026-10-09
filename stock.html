@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gas La Chispa - Control de Stock</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+            <div class="container">
+                <a class="navbar-brand text-warning fw-bold" href="index.html">🔥 Gas La Chispa <span class="badge bg-danger ms-2">ADMIN</span></a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item"><a class="nav-link" href="admin.html">Panel</a></li>
+                        <li class="nav-item"><a class="nav-link active" href="stock.html">Stock</a></li>
+                        <li class="nav-item"><a class="nav-link" href="usuarios.html">Usuarios</a></li>
+                        <li class="nav-item"><a class="nav-link" href="login-admi.html">Cerrar sesión</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container my-5">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <div>
+                <h2 class="fw-bold mb-0">📦 Control de Stock</h2>
+                <small class="text-muted">Cilindros en bodega y movimientos del día</small>
+            </div>
+            <button class="btn btn-warning fw-bold" onclick="abrirModalMovimiento()">+ Registrar Movimiento</button>
+        </div>
+
+        <!-- Alertas de stock bajo -->
+        <div id="alertas-stock" class="mb-4"></div>
+
+        <!-- Stock actual -->
+        <div class="row g-4 mb-5">
+            <div class="col-6 col-md-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <div class="fs-1 mb-2">🔵</div>
+                        <h6 class="fw-bold">Cilindro 5 kg</h6>
+                        <div class="display-5 fw-bold" id="stock-5">0</div>
+                        <small class="text-muted">unidades</small>
+                        <div class="mt-2">
+                            <span class="badge" id="badge-stock-5"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <div class="fs-1 mb-2">🟢</div>
+                        <h6 class="fw-bold">Cilindro 11 kg</h6>
+                        <div class="display-5 fw-bold" id="stock-11">0</div>
+                        <small class="text-muted">unidades</small>
+                        <div class="mt-2">
+                            <span class="badge" id="badge-stock-11"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <div class="fs-1 mb-2">🟡</div>
+                        <h6 class="fw-bold">Cilindro 15 kg</h6>
+                        <div class="display-5 fw-bold" id="stock-15">0</div>
+                        <small class="text-muted">unidades</small>
+                        <div class="mt-2">
+                            <span class="badge" id="badge-stock-15"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <div class="fs-1 mb-2">🔴</div>
+                        <h6 class="fw-bold">Cilindro 45 kg</h6>
+                        <div class="display-5 fw-bold" id="stock-45">0</div>
+                        <small class="text-muted">unidades</small>
+                        <div class="mt-2">
+                            <span class="badge" id="badge-stock-45"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Historial de movimientos -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="fw-bold mb-0">📋 Historial de Movimientos</h5>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-dark active" data-mov="todos">Todos</button>
+                                <button class="btn btn-outline-dark" data-mov="entrada">Entradas</button>
+                                <button class="btn btn-outline-dark" data-mov="salida">Salidas</button>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Tipo</th>
+                                        <th>Producto</th>
+                                        <th>Cantidad</th>
+                                        <th>Responsable</th>
+                                        <th>Motivo</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-movimientos">
+                                    <tr><td colspan="6" class="text-center text-muted py-4">Sin movimientos registrados</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal: Registrar movimiento -->
+    <div class="modal fade" id="modalMovimiento" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title">Registrar Movimiento de Stock</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formMovimiento">
+                        <div class="mb-3">
+                            <label class="form-label">Tipo de movimiento *</label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="tipoMov" id="movEntrada" value="entrada">
+                                <label class="btn btn-outline-success" for="movEntrada">📥 Entrada (Reposición)</label>
+                                <input type="radio" class="btn-check" name="tipoMov" id="movSalida" value="salida">
+                                <label class="btn btn-outline-danger" for="movSalida">📤 Salida</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Producto *</label>
+                            <select class="form-select" id="movProducto" required>
+                                <option value="">Seleccione...</option>
+                                <option value="5">Cilindro 5 kg</option>
+                                <option value="11">Cilindro 11 kg</option>
+                                <option value="15">Cilindro 15 kg</option>
+                                <option value="45">Cilindro 45 kg</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Cantidad *</label>
+                            <input type="number" class="form-control" id="movCantidad" min="1" max="500" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Responsable *</label>
+                            <input type="text" class="form-control" id="movResponsable" required placeholder="Nombre de quien registra">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Motivo</label>
+                            <input type="text" class="form-control" id="movMotivo" maxlength="200" placeholder="Ej: Reposición proveedor, merma, etc.">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-warning fw-bold" onclick="guardarMovimiento()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container text-center">
+            <p class="mb-0 small">Gas La Chispa - Control de Stock © 2026</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/stock.js"></script>
+</body>
+</html>

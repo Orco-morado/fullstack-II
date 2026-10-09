@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gas La Chispa - Panel Operadora</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+            <div class="container">
+                <a class="navbar-brand text-warning fw-bold" href="index.html">🔥 Gas La Chispa <span class="badge bg-info ms-2">OPERADORA</span></a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item"><a class="nav-link active" href="operadora.html">Pedidos</a></li>
+                        <li class="nav-item"><a class="nav-link" href="stock.html">Stock</a></li>
+                        <li class="nav-item"><a class="nav-link" href="admin.html">Panel</a></li>
+                        <li class="nav-item"><a class="nav-link" href="login-admi.html">Cerrar sesión</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container-fluid my-4 px-lg-5">
+        <div class="row mb-4">
+            <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <h2 class="fw-bold mb-0">📋 Pedidos del Día</h2>
+                    <small class="text-muted" id="fecha-hoy"></small>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-warning" onclick="actualizarVista()">🔄 Actualizar</button>
+                    <button class="btn btn-warning fw-bold" onclick="abrirModalNuevoPedido()">+ Nuevo Pedido</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPIs -->
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-3">
+                <div class="card border-0 shadow-sm text-center p-3">
+                    <div class="display-6 fw-bold text-primary" id="kpi-total">0</div>
+                    <small class="text-muted">Total pedidos</small>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card border-0 shadow-sm text-center p-3">
+                    <div class="display-6 fw-bold text-secondary" id="kpi-pendientes">0</div>
+                    <small class="text-muted">Sin asignar</small>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card border-0 shadow-sm text-center p-3">
+                    <div class="display-6 fw-bold text-warning" id="kpi-camino">0</div>
+                    <small class="text-muted">En camino</small>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card border-0 shadow-sm text-center p-3">
+                    <div class="display-6 fw-bold text-success" id="kpi-entregados">0</div>
+                    <small class="text-muted">Entregados</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Lista de pedidos -->
+            <div class="col-xl-7">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                            <h5 class="fw-bold mb-0">Lista de pedidos</h5>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button class="btn btn-outline-dark active" data-filtro="todos">Todos</button>
+                                <button class="btn btn-outline-dark" data-filtro="recibido">Pendientes</button>
+                                <button class="btn btn-outline-dark" data-filtro="camino">En camino</button>
+                                <button class="btn btn-outline-dark" data-filtro="entregado">Entregados</button>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle" id="tabla-pedidos">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Cliente</th>
+                                        <th>Producto</th>
+                                        <th>Comuna</th>
+                                        <th>Estado</th>
+                                        <th>Repartidor</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-pedidos">
+                                    <tr><td colspan="7" class="text-center text-muted py-4">Cargando pedidos...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mapa -->
+            <div class="col-xl-5">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-0">
+                        <div id="mapa-operadora" style="height: 400px;"></div>
+                    </div>
+                    <div class="card-footer bg-white">
+                        <small class="text-muted">Vista general de todos los pedidos del día sobre el mapa</small>
+                    </div>
+                </div>
+
+                <!-- Repartidores -->
+                <div class="card shadow-sm border-0 mt-4">
+                    <div class="card-body">
+                        <h5 class="fw-bold mb-3">🚚 Repartidores activos</h5>
+                        <div id="lista-repartidores">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="badge bg-success me-2">●</div>
+                                <div>
+                                    <strong>Carlos Rojas</strong>
+                                    <small class="text-muted d-block">Camión 1 - 3 pedidos asignados</small>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="badge bg-success me-2">●</div>
+                                <div>
+                                    <strong>María López</strong>
+                                    <small class="text-muted d-block">Camión 2 - 2 pedidos asignados</small>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <div class="badge bg-secondary me-2">●</div>
+                                <div>
+                                    <strong>Jorge Díaz</strong>
+                                    <small class="text-muted d-block">Camión 3 - Libre</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal: Nuevo pedido -->
+    <div class="modal fade" id="modalNuevoPedido" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title">Nuevo Pedido Manual</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formNuevoPedido">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Nombre del cliente *</label>
+                                <input type="text" class="form-control" id="npCliente" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Teléfono *</label>
+                                <input type="tel" class="form-control" id="npFono" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Comuna *</label>
+                                <select class="form-select" id="npComuna" required>
+                                    <option value="">Seleccione...</option>
+                                    <option value="Chillan">Chillán</option>
+                                    <option value="ChillanViejo">Chillán Viejo</option>
+                                    <option value="SanNicolas">San Nicolás</option>
+                                    <option value="Pinto">Pinto</option>
+                                    <option value="Coihueco">Coihueco</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Dirección *</label>
+                                <input type="text" class="form-control" id="npDireccion" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Cilindro *</label>
+                                <select class="form-select" id="npCilindro" required>
+                                    <option value="5">5 kg - $11.500</option>
+                                    <option value="11">11 kg - $20.000</option>
+                                    <option value="15">15 kg - $27.000</option>
+                                    <option value="45">45 kg - $60.000</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Cantidad *</label>
+                                <input type="number" class="form-control" id="npCantidad" min="1" max="20" value="1" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Repartidor</label>
+                                <select class="form-select" id="npRepartidor">
+                                    <option value="">Sin asignar aún</option>
+                                    <option value="Carlos Rojas">Carlos Rojas</option>
+                                    <option value="María López">María López</option>
+                                    <option value="Jorge Díaz">Jorge Díaz</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Observaciones</label>
+                                <textarea class="form-control" id="npObs" rows="2" maxlength="300"></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-warning fw-bold" onclick="guardarNuevoPedido()">Guardar Pedido</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Asignar repartidor -->
+    <div class="modal fade" id="modalAsignar" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title">Asignar Repartidor</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Pedido: <strong id="asignar-pedido-id"></strong></p>
+                    <label class="form-label">Seleccionar repartidor:</label>
+                    <select class="form-select" id="selectRepartidor">
+                        <option value="Carlos Rojas">Carlos Rojas (Camión 1)</option>
+                        <option value="María López">María López (Camión 2)</option>
+                        <option value="Jorge Díaz">Jorge Díaz (Camión 3)</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-warning fw-bold" onclick="confirmarAsignacion()">Asignar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white py-3 mt-5">
+        <div class="container text-center">
+            <p class="mb-0 small">Gas La Chispa - Panel Operadora © 2026</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="js/operadora.js"></script>
+</body>
+</html>

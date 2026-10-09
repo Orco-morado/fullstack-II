@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gas La Chispa - Mis Entregas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .pedido-card { border-left: 4px solid transparent; transition: all 0.2s; }
+        .pedido-card.pendiente { border-left-color: #6c757d; }
+        .pedido-card.camino { border-left-color: #ffc107; }
+        .pedido-card.entregado { border-left-color: #198754; opacity: 0.7; }
+        .btn-estado { font-size: 1.1rem; padding: 12px; }
+        @media (max-width: 576px) {
+            .btn-estado { font-size: 1rem; padding: 14px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar navbar-dark bg-dark shadow-sm">
+            <div class="container-fluid">
+                <a class="navbar-brand text-warning fw-bold" href="index.html">🚚 Gas La Chispa <span class="badge bg-warning text-dark ms-2">REPARTIDOR</span></a>
+                <div class="d-flex align-items-center">
+                    <span class="text-white me-3 d-none d-sm-inline">Carlos Rojas</span>
+                    <button class="btn btn-outline-light btn-sm" onclick="cambiarRepartidor()">Cambiar</button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container-fluid my-3 px-lg-5">
+        <!-- Resumen del turno -->
+        <div class="row g-3 mb-4">
+            <div class="col-4">
+                <div class="card border-0 shadow-sm text-center p-3">
+                    <div class="h3 fw-bold text-primary mb-0" id="mis-pendientes">0</div>
+                    <small class="text-muted">Pendientes</small>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="card border-0 shadow-sm text-center p-3">
+                    <div class="h3 fw-bold text-warning mb-0" id="mis-camino">0</div>
+                    <small class="text-muted">En camino</small>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="card border-0 shadow-sm text-center p-3">
+                    <div class="h3 fw-bold text-success mb-0" id="mis-entregados">0</div>
+                    <small class="text-muted">Entregados</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Lista de pedidos -->
+            <div class="col-lg-6">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0">📋 Mis Pedidos Asignados</h5>
+                    <button class="btn btn-sm btn-outline-warning" onclick="actualizarMisPedidos()">🔄</button>
+                </div>
+                <div id="lista-mis-pedidos">
+                    <div class="alert alert-info">Cargando pedidos...</div>
+                </div>
+            </div>
+
+            <!-- Mapa + detalle -->
+            <div class="col-lg-6">
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body p-0">
+                        <div id="mapa-repartidor" style="height: 350px;"></div>
+                    </div>
+                </div>
+
+                <!-- Detalle del pedido seleccionado -->
+                <div class="card shadow-sm border-0" id="detalle-pedido" style="display: none;">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h5 class="fw-bold mb-0" id="det-id"></h5>
+                                <small class="text-muted" id="det-fecha"></small>
+                            </div>
+                            <span class="badge" id="det-estado"></span>
+                        </div>
+
+                        <ul class="list-group list-group-flush mb-3">
+                            <li class="list-group-item px-0 d-flex justify-content-between">
+                                <span class="text-muted">Cliente</span>
+                                <strong id="det-cliente"></strong>
+                            </li>
+                            <li class="list-group-item px-0 d-flex justify-content-between">
+                                <span class="text-muted">Teléfono</span>
+                                <a id="det-fono" href="#" class="text-decoration-none"></a>
+                            </li>
+                            <li class="list-group-item px-0 d-flex justify-content-between">
+                                <span class="text-muted">Dirección</span>
+                                <strong class="text-end" id="det-direccion"></strong>
+                            </li>
+                            <li class="list-group-item px-0 d-flex justify-content-between">
+                                <span class="text-muted">Producto</span>
+                                <strong id="det-producto"></strong>
+                            </li>
+                            <li class="list-group-item px-0 d-flex justify-content-between">
+                                <span class="text-muted">Pago al recibir</span>
+                                <strong class="text-success" id="det-total"></strong>
+                            </li>
+                        </ul>
+
+                        <!-- Botones de acción -->
+                        <div class="d-grid gap-2" id="acciones-pedido">
+                            <!-- Se llenan dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-dark text-white py-3 mt-5">
+        <div class="container text-center">
+            <p class="mb-0 small">Gas La Chispa - Panel Repartidor © 2026</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="js/repartidor.js"></script>
+</body>
+</html>
