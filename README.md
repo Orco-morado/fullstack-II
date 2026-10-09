@@ -6,7 +6,10 @@ Prototipo de tienda online de gas doméstico, migrado de HTML/CSS/JS estático a
 
 ```
 gas-la-chispa/
-├── *.html, js/, css/, img/   # prototipo estático original (referencia del Parcial 1)
+├── vistas-estaticas/         # prototipo HTML/CSS/JS sin React (Parcial 1, solo referencia)
+│   ├── *.html                # las 17 vistas originales
+│   ├── js/, css/, img/       # estilos, scripts e imágenes del prototipo
+│   └── package.json          # live-server para servirlo (npm install && npx live-server)
 ├── frontend/                 # aplicación React (la entrega del Parcial 2)
 │   ├── src/
 │   │   ├── components/       # componentes reutilizables (Navigation, Footer, ProductCard, ProtectedRoute…)
