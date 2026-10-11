@@ -59,6 +59,19 @@ Los mismos specs corren en ambos runners: están escritos con matchers compatibl
 - Repartidor → `/repartidor`
 - Cliente → `/` (tienda) y `/checkout`
 
+## Cambio de usuario
+
+La autenticación es simulada (mock) sin backend real. Para cambiar de usuario:
+
+1. **Logout**: Click en el botón "Salir" / "Logout" en la barra de navegación (o navega a `/logout`).
+2. **Login**: Serás redirigido a `/login`. Ingresa las credenciales del nuevo usuario (tabla arriba).
+3. **Redirección automática** según rol:
+   - Administrador / Operadora → `/admin`
+   - Repartidor → `/repartidor`
+   - Cliente → `/` (home tienda)
+
+> **Nota**: No hay "cambio rápido" ni sesiones simultáneas. Cada login reemplaza la sesión anterior en `localStorage`/`sessionStorage`. El usuario `lucia@gmail.com` está `inactivo` y no podrá loguearse.
+
 ## Stack
 
 - React 19 + react-scripts 5 (create-react-app)

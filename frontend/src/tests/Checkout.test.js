@@ -1,6 +1,6 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import { screen, fireEvent } from '@testing-library/react';
+import { screen, fireEvent, within } from '@testing-library/react';
 import Checkout from '../pages/Checkout';
 import { renderWithProviders, clearStorage, seedCart } from './helpers';
 
@@ -41,7 +41,7 @@ function llenarFormulario(container, { email = '' } = {}) {
   fireEvent.change(screen.getByLabelText(/^Comuna/), {
     target: { value: 'Chillan' },
   });
-  fireEvent.click(container.querySelector('input[type="checkbox"]'));
+  fireEvent.click(within(container).getByRole('checkbox'));
 }
 
 describe('Checkout - renderizado condicional', () => {

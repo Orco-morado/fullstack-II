@@ -65,7 +65,7 @@ export default function UserNew() {
               </Col>
               <Col md={3}>
                 <Form.Label>Contraseña *</Form.Label>
-                <Form.Control type="password" value={f.password} onChange={set('password')} isInvalid={!!errores.password} />
+                <Form.Control type="password" aria-label="Contraseña" value={f.password} onChange={set('password')} isInvalid={!!errores.password} />
                 <Form.Control.Feedback type="invalid">{errores.password}</Form.Control.Feedback>
               </Col>
               <Col md={3}>
