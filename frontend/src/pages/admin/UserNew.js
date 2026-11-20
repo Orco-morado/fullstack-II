@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Container, Card, Form, Button, Row, Col } from 'react-bootstrap';
+import { Container, Card, Form, Button, Row, Col, Alert } from 'react-bootstrap';
 import { useNavigate, Link } from 'react-router-dom';
 import { useData } from '../../context/DataContext';
 
@@ -10,6 +10,7 @@ export default function UserNew() {
   const navigate = useNavigate();
   const [f, setF] = useState(vacio);
   const [errores, setErrores] = useState({});
+  const [errorServidor, setErrorServidor] = useState('');
 
   const set = (k) => (e) => {
     setF((prev) => ({ ...prev, [k]: e.target.value }));
@@ -26,7 +27,8 @@ export default function UserNew() {
     setErrores(errs);
     if (Object.keys(errs).length > 0) return;
 
-    crearUsuario({
+    setErrorServidor('');
+    const result = crearUsuario({
       run: f.run.trim(),
       nombre: f.nombre.trim(),
       email: f.email.trim(),
@@ -38,12 +40,18 @@ export default function UserNew() {
       direccion: f.direccion.trim(),
     });
 
-    navigate('/admin/usuarios');
+    const irALista = () => navigate('/admin/usuarios');
+    if (result && typeof result.then === 'function') {
+      result.then(irALista).catch((err) => setErrorServidor(err.message));
+      return;
+    }
+    irALista();
   };
 
   return (
     <Container className="my-4" style={{ maxWidth: 800 }}>
       <h2 className="fw-bold mb-4">➕ Usuario nuevo</h2>
+      {errorServidor && <Alert variant="danger">{errorServidor}</Alert>}
       <Card className="shadow-sm border-0">
         <Card.Body className="p-4">
           <Form noValidate onSubmit={handleSubmit}>
@@ -75,7 +83,7 @@ export default function UserNew() {
               <Col md={4}>
                 <Form.Label>Rol *</Form.Label>
                 <Form.Select value={f.rol} onChange={set('rol')}>
-                  {['Administrador', 'Operadora', 'Repartidor', 'Cliente'].map((r) => (
+                  {['Administrador', 'Operadora', 'Vendedor', 'Repartidor', 'Cliente'].map((r) => (
                     <option key={r} value={r}>{r}</option>
                   ))}
                 </Form.Select>

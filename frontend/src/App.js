@@ -37,6 +37,7 @@ import UserHistory from './pages/admin/UserHistory';
 import Reports from './pages/admin/Reports';
 import Profile from './pages/admin/Profile';
 import RepartidorPanel from './pages/repartidor/Panel';
+import VendedorPanel from './pages/vendedor/Panel';
 
 const ROLES_ADMIN = ['Administrador', 'Operadora'];
 
@@ -93,6 +94,9 @@ function App() {
 
                 {/* Repartidor */}
                 <Route path="/repartidor" element={<ProtectedRoute roles={['Repartidor']}><RepartidorPanel /></ProtectedRoute>} />
+
+                {/* Vendedor */}
+                <Route path="/vendedor" element={<ProtectedRoute roles={['Vendedor']}><VendedorPanel /></ProtectedRoute>} />
 
                 <Route path="*" element={<NotFound />} />
               </Route>

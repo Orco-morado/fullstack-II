@@ -11,11 +11,12 @@ const vacio = {
 };
 
 export default function Register() {
-  const { crearUsuario } = useData();
+  const { registrarUsuario } = useData();
   const navigate = useNavigate();
   const [f, setF] = useState(vacio);
   const [errores, setErrores] = useState({});
   const [ok, setOk] = useState(false);
+  const [errorServidor, setErrorServidor] = useState('');
 
   const set = (campo) => (e) => {
     setF((prev) => ({ ...prev, [campo]: e.target.value }));
@@ -43,7 +44,7 @@ export default function Register() {
     setErrores(errs);
     if (Object.keys(errs).length > 0) return;
 
-    crearUsuario({
+    const datos = {
       run: f.run.trim(),
       nombre: `${f.nombre.trim()} ${f.apellidos.trim()}`,
       email: f.email.trim(),
@@ -52,10 +53,20 @@ export default function Register() {
       estado: 'activo',
       comuna: f.comuna,
       direccion: f.direccion.trim(),
-    });
+    };
 
-    setOk(true);
-    setTimeout(() => navigate('/login'), 2000);
+    setErrorServidor('');
+    const completar = () => {
+      setOk(true);
+      setTimeout(() => navigate('/login'), 2000);
+    };
+
+    const result = registrarUsuario(datos);
+    if (result && typeof result.then === 'function') {
+      result.then(completar).catch((err) => setErrorServidor(err.message));
+      return;
+    }
+    completar();
   };
 
   return (
@@ -71,6 +82,8 @@ export default function Register() {
                   ✓ Cuenta creada con éxito. Redirigiendo al inicio de sesión...
                 </Alert>
               )}
+
+              {errorServidor && <Alert variant="danger">{errorServidor}</Alert>}
 
               <Form noValidate onSubmit={handleSubmit}>
                 <Row className="g-3">

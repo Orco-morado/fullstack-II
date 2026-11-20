@@ -6,6 +6,7 @@ import { useData } from '../../context/DataContext';
 const ROLES = {
   Administrador: 'danger',
   Operadora: 'info',
+  Vendedor: 'secondary',
   Repartidor: 'warning',
   Cliente: 'success',
 };

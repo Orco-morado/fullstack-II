@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Container, Card, Form, Button, Row, Col, Alert } from 'react-bootstrap';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useData } from '../../context/DataContext';
@@ -9,21 +9,24 @@ export default function UserEdit() {
   const navigate = useNavigate();
 
   const original = usuarios.find((u) => u.id === id);
-  const [f, setF] = useState(() =>
-    original
-      ? {
-          nombre: original.nombre,
-          email: original.email,
-          telefono: original.telefono,
-          rol: original.rol,
-          estado: original.estado,
-          comuna: original.comuna,
-          direccion: original.direccion,
-          password: '',
-        }
-      : null
-  );
+  const [f, setF] = useState(null);
   const [errores, setErrores] = useState({});
+  const [errorServidor, setErrorServidor] = useState('');
+
+  useEffect(() => {
+    if (original && !f) {
+      setF({
+        nombre: original.nombre,
+        email: original.email,
+        telefono: original.telefono,
+        rol: original.rol,
+        estado: original.estado,
+        comuna: original.comuna,
+        direccion: original.direccion,
+        password: '',
+      });
+    }
+  }, [original, f]);
 
   if (!original || !f) {
     return (
@@ -64,14 +67,22 @@ export default function UserEdit() {
     };
     if (f.password) cambios.password = f.password;
 
-    actualizarUsuario(id, cambios);
-    navigate('/admin/usuarios');
+    setErrorServidor('');
+    const result = actualizarUsuario(id, cambios);
+    const irALista = () => navigate('/admin/usuarios');
+    if (result && typeof result.then === 'function') {
+      result.then(irALista).catch((err) => setErrorServidor(err.message));
+      return;
+    }
+    irALista();
   };
 
   return (
     <Container className="my-4" style={{ maxWidth: 800 }}>
       <h2 className="fw-bold mb-1">✏️ Editar usuario</h2>
       <p className="text-muted mb-4">{original.run} · creado {new Date(original.creadoEn).toLocaleDateString('es-CL')}</p>
+
+      {errorServidor && <Alert variant="danger">{errorServidor}</Alert>}
 
       <Card className="shadow-sm border-0">
         <Card.Body className="p-4">
@@ -99,7 +110,7 @@ export default function UserEdit() {
               <Col md={4}>
                 <Form.Label>Rol</Form.Label>
                 <Form.Select value={f.rol} onChange={set('rol')}>
-                  {['Administrador', 'Operadora', 'Repartidor', 'Cliente'].map((r) => (
+                  {['Administrador', 'Operadora', 'Vendedor', 'Repartidor', 'Cliente'].map((r) => (
                     <option key={r} value={r}>{r}</option>
                   ))}
                 </Form.Select>

@@ -15,6 +15,7 @@ export default function Navigation() {
   };
 
   const esInterno = isAuthenticated && ['Administrador', 'Operadora'].includes(user.rol);
+  const esVendedor = isAuthenticated && user.rol === 'Vendedor';
   const esRepartidor = isAuthenticated && user.rol === 'Repartidor';
 
   return (
@@ -34,6 +35,11 @@ export default function Navigation() {
               <Nav.Link as={Link} to="/admin/reportes">Reportes</Nav.Link>
               <Nav.Link as={Link} to="/admin/perfil">Perfil</Nav.Link>
             </Nav>
+          ) : esVendedor ? (
+            <Nav className="me-auto">
+              <Nav.Link as={Link} to="/vendedor">Panel de ventas</Nav.Link>
+              <Nav.Link as={Link} to="/admin/perfil">Perfil</Nav.Link>
+            </Nav>
           ) : esRepartidor ? (
             <Nav className="me-auto">
               <Nav.Link as={Link} to="/repartidor">Mis Entregas</Nav.Link>
@@ -51,7 +57,7 @@ export default function Navigation() {
           )}
 
           <Nav className="ms-auto align-items-lg-center">
-            {!esInterno && !esRepartidor && (
+            {!esInterno && !esRepartidor && !esVendedor && (
               <Nav.Link as={Link} to="/carrito" className="text-warning fw-bold">
                 🛒 Cart{' '}
                 <Badge bg={totalItems > 0 ? 'warning' : 'secondary'} text={totalItems > 0 ? 'dark' : 'light'}>
@@ -67,7 +73,7 @@ export default function Navigation() {
                 </Dropdown.Toggle>
                 <Dropdown.Menu>
                   <Dropdown.Item as={Link} to={homePathFor(user.rol)}>Mi panel</Dropdown.Item>
-                  <Dropdown.Item as={Link} to="/admin/perfil" hidden={!esInterno}>Perfil</Dropdown.Item>
+                  <Dropdown.Item as={Link} to="/admin/perfil" hidden={!esInterno && !esVendedor}>Perfil</Dropdown.Item>
                   <Dropdown.Divider />
                   <Dropdown.Item onClick={handleLogout}>Cerrar sesión</Dropdown.Item>
                 </Dropdown.Menu>

@@ -35,6 +35,19 @@ export default function Login() {
     if (Object.keys(errs).length > 0) return;
 
     const result = login(email, password, recordar);
+
+    if (result && typeof result.then === 'function') {
+      result.then((res) => {
+        if (!res.ok) {
+          setErrorGlobal(res.error);
+          return;
+        }
+        const destino = location.state?.from || homePathFor(res.user.rol);
+        navigate(destino, { replace: true });
+      });
+      return;
+    }
+
     if (!result.ok) {
       setErrorGlobal(result.error);
       return;
@@ -102,6 +115,7 @@ export default function Login() {
               <small className="d-block">operadora@gmail.com / oper1234</small>
               <small className="d-block">repartidor@gmail.com / repart123</small>
               <small className="d-block">cliente@gmail.com / cliente123</small>
+              <small className="d-block">vendedor@gmail.com / vendedor1</small>
             </Card>
           </Card.Body>
         </Card>

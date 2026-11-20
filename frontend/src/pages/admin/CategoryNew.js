@@ -24,11 +24,19 @@ export default function CategoryNew() {
       return;
     }
 
-    crearCategoria({ nombre: nombre.trim(), descripcion: descripcion.trim() });
-    setOk(true);
-    setNombre('');
-    setDescripcion('');
-    setTimeout(() => navigate('/admin/productos'), 1500);
+    const completar = () => {
+      setOk(true);
+      setNombre('');
+      setDescripcion('');
+      setTimeout(() => navigate('/admin/productos'), 1500);
+    };
+
+    const result = crearCategoria({ nombre: nombre.trim(), descripcion: descripcion.trim() });
+    if (result && typeof result.then === 'function') {
+      result.then(completar).catch((err) => setError(err.message));
+      return;
+    }
+    completar();
   };
 
   return (

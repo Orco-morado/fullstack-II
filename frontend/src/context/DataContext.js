@@ -1,150 +1,162 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import * as db from '../data/db';
+import { USE_LOCAL, api } from '../api';
+import { useAuth } from './AuthContext';
 
-// Contexto que expone los datos + mutaciones a toda la app.
-// Los componentes consumen este contexto para leer datos y
-// refrescar la interfaz automáticamente tras cada operación CRUD.
 const DataContext = createContext(null);
 
 export function DataProvider({ children }) {
-  const [productos, setProductos] = useState(() => db.getProducts());
-  const [categorias, setCategorias] = useState(() => db.getCategories());
-  const [usuarios, setUsuarios] = useState(() => db.getUsers());
-  const [pedidos, setPedidos] = useState(() => db.getOrders());
-  const [ofertas, setOfertas] = useState(() => db.getOffers());
-  const [blogs, setBlogs] = useState(() => db.getPosts());
+  const { user, isAuthenticated } = useAuth();
+  const canSeeUsers = isAuthenticated && ['Administrador', 'Operadora'].includes(user?.rol);
 
-  const refresh = useCallback(() => {
-    setProductos(db.getProducts());
-    setCategorias(db.getCategories());
-    setUsuarios(db.getUsers());
-    setPedidos(db.getOrders());
-    setOfertas(db.getOffers());
-    setBlogs(db.getPosts());
-  }, []);
+  const [productos, setProductos] = useState(() => (USE_LOCAL ? db.getProducts() : []));
+  const [categorias, setCategorias] = useState(() => (USE_LOCAL ? db.getCategories() : []));
+  const [usuarios, setUsuarios] = useState(() => (USE_LOCAL ? db.getUsers() : []));
+  const [pedidos, setPedidos] = useState(() => (USE_LOCAL ? db.getOrders() : []));
+  const [ofertas, setOfertas] = useState(() => (USE_LOCAL ? db.getOffers() : []));
+  const [blogs, setBlogs] = useState(() => (USE_LOCAL ? db.getPosts() : []));
+
+  const refresh = useCallback(async () => {
+    if (USE_LOCAL) {
+      setProductos(db.getProducts());
+      setCategorias(db.getCategories());
+      setUsuarios(db.getUsers());
+      setPedidos(db.getOrders());
+      setOfertas(db.getOffers());
+      setBlogs(db.getPosts());
+      return;
+    }
+
+    try {
+      const [prods, cats, offers, posts] = await Promise.all([
+        api.get('/productos'),
+        api.get('/categorias'),
+        api.get('/ofertas'),
+        api.get('/blogs'),
+      ]);
+
+      setProductos(prods);
+      setCategorias(cats);
+      setOfertas(offers);
+      setBlogs(posts);
+
+      if (isAuthenticated) {
+        setPedidos(await api.get('/pedidos'));
+      } else {
+        setPedidos([]);
+      }
+
+      if (canSeeUsers) {
+        setUsuarios(await api.get('/usuarios'));
+      } else {
+        setUsuarios([]);
+      }
+    } catch (err) {
+      console.warn('No se pudieron cargar los datos desde la API:', err.message);
+    }
+  }, [isAuthenticated, canSeeUsers]);
+
+  useEffect(() => {
+    if (!USE_LOCAL) refresh();
+  }, [refresh]);
+
+  const mutar = (localFn, apiCall) => {
+    if (USE_LOCAL) {
+      const result = localFn();
+      refresh();
+      return result;
+    }
+    return apiCall().then((result) => {
+      refresh();
+      return result;
+    });
+  };
+
+  const stats = USE_LOCAL
+    ? db.getDBStats()
+    : {
+        productos: productos.length,
+        categorias: categorias.length,
+        usuarios: usuarios.length,
+        pedidos: pedidos.length,
+        ofertas: ofertas.length,
+        blogs: blogs.length,
+        ventasTotales: pedidos
+          .filter((p) => p.estado === 'entregado')
+          .reduce((acc, p) => acc + p.total, 0),
+        pedidosPendientes: pedidos.filter((p) => p.estado === 'recibido').length,
+        productosCriticos: productos.filter((p) => p.stock < 10).length,
+      };
 
   const value = {
-    // lecturas
     productos,
     categorias,
     usuarios,
     pedidos,
     ofertas,
     blogs,
-    stats: db.getDBStats(),
+    stats,
     refresh,
 
-    // productos
-    crearProducto: (data) => {
-      const p = db.createProduct(data);
-      refresh();
-      return p;
-    },
-    actualizarProducto: (id, changes) => {
-      const p = db.updateProduct(id, changes);
-      refresh();
-      return p;
-    },
-    eliminarProducto: (id) => {
-      const ok = db.deleteProduct(id);
-      refresh();
-      return ok;
-    },
+    crearProducto: (data) =>
+      mutar(() => db.createProduct(data), () => api.post('/productos', data)),
+    actualizarProducto: (id, changes) =>
+      mutar(() => db.updateProduct(id, changes), () => api.put(`/productos/${id}`, changes)),
+    eliminarProducto: (id) =>
+      mutar(() => db.deleteProduct(id), () => api.remove(`/productos/${id}`)),
 
-    // categorías
-    crearCategoria: (data) => {
-      const c = db.createCategory(data);
-      refresh();
-      return c;
-    },
-    actualizarCategoria: (id, changes) => {
-      const c = db.updateCategory(id, changes);
-      refresh();
-      return c;
-    },
-    eliminarCategoria: (id) => {
-      const ok = db.deleteCategory(id);
-      refresh();
-      return ok;
-    },
+    crearCategoria: (data) =>
+      mutar(() => db.createCategory(data), () => api.post('/categorias', data)),
+    actualizarCategoria: (id, changes) =>
+      mutar(() => db.updateCategory(id, changes), () => api.put(`/categorias/${id}`, changes)),
+    eliminarCategoria: (id) =>
+      mutar(() => db.deleteCategory(id), () => api.remove(`/categorias/${id}`)),
 
-    // usuarios
-    crearUsuario: (data) => {
-      const u = db.createUser(data);
-      refresh();
-      return u;
+    crearUsuario: (data) =>
+      mutar(() => db.createUser(data), () => api.post('/usuarios', data)),
+    registrarUsuario: (data) => {
+      if (USE_LOCAL) {
+        const nuevo = db.createUser(data);
+        refresh();
+        return nuevo;
+      }
+      return api.post('/auth/registro', data, { auth: false });
     },
-    actualizarUsuario: (id, changes) => {
-      const u = db.updateUser(id, changes);
-      refresh();
-      return u;
-    },
-    eliminarUsuario: (id) => {
-      const ok = db.deleteUser(id);
-      refresh();
-      return ok;
-    },
+    actualizarUsuario: (id, changes) =>
+      mutar(() => db.updateUser(id, changes), () => api.put(`/usuarios/${id}`, changes)),
+    eliminarUsuario: (id) =>
+      mutar(() => db.deleteUser(id), () => api.remove(`/usuarios/${id}`)),
 
-    // pedidos
-    crearPedido: (data) => {
-      const p = db.createOrder(data);
-      refresh();
-      return p;
-    },
-    actualizarPedido: (id, changes) => {
-      const p = db.updateOrder(id, changes);
-      refresh();
-      return p;
-    },
-    asignarPedido: (id, repartidor) => {
-      const p = db.assignOrder(id, repartidor);
-      refresh();
-      return p;
-    },
-    cambiarEstadoPedido: (id, estado) => {
-      const p = db.changeOrderStatus(id, estado);
-      refresh();
-      return p;
-    },
-    eliminarPedido: (id) => {
-      const ok = db.deleteOrder(id);
-      refresh();
-      return ok;
-    },
+    crearPedido: (data) =>
+      mutar(() => db.createOrder(data), () => api.post('/pedidos', data)),
+    actualizarPedido: (id, changes) =>
+      mutar(() => db.updateOrder(id, changes), () => api.put(`/pedidos/${id}`, changes)),
+    asignarPedido: (id, repartidor) =>
+      mutar(
+        () => db.assignOrder(id, repartidor),
+        () => api.put(`/pedidos/${id}`, { repartidor, estado: 'asignado' })
+      ),
+    cambiarEstadoPedido: (id, estado) =>
+      mutar(
+        () => db.changeOrderStatus(id, estado),
+        () => api.put(`/pedidos/${id}/estado`, { estado })
+      ),
+    eliminarPedido: (id) =>
+      mutar(() => db.deleteOrder(id), () => api.remove(`/pedidos/${id}`)),
 
-    // ofertas
-    crearOferta: (data) => {
-      const o = db.createOffer(data);
-      refresh();
-      return o;
-    },
-    actualizarOferta: (id, changes) => {
-      const o = db.updateOffer(id, changes);
-      refresh();
-      return o;
-    },
-    eliminarOferta: (id) => {
-      const ok = db.deleteOffer(id);
-      refresh();
-      return ok;
-    },
+    crearOferta: (data) =>
+      mutar(() => db.createOffer(data), () => api.post('/ofertas', data)),
+    actualizarOferta: (id, changes) =>
+      mutar(() => db.updateOffer(id, changes), () => api.put(`/ofertas/${id}`, changes)),
+    eliminarOferta: (id) =>
+      mutar(() => db.deleteOffer(id), () => api.remove(`/ofertas/${id}`)),
 
-    // blog
-    crearPost: (data) => {
-      const p = db.createPost(data);
-      refresh();
-      return p;
-    },
-    actualizarPost: (id, changes) => {
-      const p = db.updatePost(id, changes);
-      refresh();
-      return p;
-    },
-    eliminarPost: (id) => {
-      const ok = db.deletePost(id);
-      refresh();
-      return ok;
-    },
+    crearPost: (data) =>
+      mutar(() => db.createPost(data), () => api.post('/blogs', data)),
+    actualizarPost: (id, changes) =>
+      mutar(() => db.updatePost(id, changes), () => api.put(`/blogs/${id}`, changes)),
+    eliminarPost: (id) =>
+      mutar(() => db.deletePost(id), () => api.remove(`/blogs/${id}`)),
   };
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;

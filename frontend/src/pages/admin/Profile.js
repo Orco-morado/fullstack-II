@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { Container, Card, Form, Button, Row, Col, Alert } from 'react-bootstrap';
 import { useAuth } from '../../context/AuthContext';
-import { authenticate } from '../../data/db';
 
 export default function Profile() {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, changePassword } = useAuth();
   const [form, setForm] = useState({
     nombre: user.nombre,
     telefono: user.telefono || '',
@@ -24,8 +23,21 @@ export default function Profile() {
       return;
     }
     setErr(null);
-    updateUser(form);
-    setMsg('✓ Datos actualizados correctamente.');
+
+    const completar = () => setMsg('✓ Datos actualizados correctamente.');
+    const result = updateUser(form);
+    if (result && typeof result.then === 'function') {
+      result.then((res) => {
+        if (res.ok) completar();
+        else setErr(res.error);
+      });
+      return;
+    }
+    if (!result.ok) {
+      setErr(result.error);
+      return;
+    }
+    completar();
   };
 
   const cambiarPass = (e) => {
@@ -35,14 +47,25 @@ export default function Profile() {
       setErr('La nueva contraseña debe tener entre 4 y 10 caracteres.');
       return;
     }
-    if (!authenticate(user.email, pass.actual).ok) {
-      setErr('La contraseña actual no coincide.');
+
+    const completar = () => {
+      setErr(null);
+      setPass({ actual: '', nueva: '' });
+      setMsg('✓ Contraseña actualizada correctamente.');
+    };
+    const result = changePassword(pass.actual, pass.nueva);
+    if (result && typeof result.then === 'function') {
+      result.then((res) => {
+        if (res.ok) completar();
+        else setErr(res.error);
+      });
       return;
     }
-    setErr(null);
-    updateUser({ password: pass.nueva });
-    setPass({ actual: '', nueva: '' });
-    setMsg('✓ Contraseña actualizada correctamente.');
+    if (!result.ok) {
+      setErr(result.error);
+      return;
+    }
+    completar();
   };
 
   return (

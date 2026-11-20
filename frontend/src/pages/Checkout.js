@@ -61,7 +61,7 @@ export default function Checkout() {
     }
 
     // Crear un pedido por cada producto del carrito
-    items.forEach((item) => {
+    const creaciones = items.map((item) =>
       crearPedido({
         clienteId: user?.id || null,
         cliente: formulario.nombre,
@@ -75,16 +75,27 @@ export default function Checkout() {
         estado: 'recibido',
         repartidor: null,
         pago: formulario.pago,
-      });
-    });
+      })
+    );
 
-    clearCart();
-    navigate('/pago-correcto', {
-      state: {
-        total: totalPrice,
-        direccion: `${formulario.direccion}, ${formulario.comuna}`,
-      },
-    });
+    const finalizar = () => {
+      clearCart();
+      navigate('/pago-correcto', {
+        state: {
+          total: totalPrice,
+          direccion: `${formulario.direccion}, ${formulario.comuna}`,
+        },
+      });
+    };
+
+    if (creaciones.some((r) => r && typeof r.then === 'function')) {
+      Promise.all(creaciones)
+        .then(finalizar)
+        .catch((err) => setErrores((prev) => ({ ...prev, general: err.message })));
+      return;
+    }
+
+    finalizar();
   };
 
   if (items.length === 0) {
@@ -208,6 +219,10 @@ export default function Checkout() {
                 />
                 {errores.acepta && (
                   <div className="text-danger small mt-1">{errores.acepta}</div>
+                )}
+
+                {errores.general && (
+                  <Alert variant="danger" className="mt-3">{errores.general}</Alert>
                 )}
 
                 <div className="d-grid mt-4">

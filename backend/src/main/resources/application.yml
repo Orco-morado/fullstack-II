@@ -1,0 +1,32 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: gas-la-chispa-api
+  datasource:
+    url: jdbc:mysql://localhost:3307/gaslachispa?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: gasla
+    password: gasla123
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+  jackson:
+    time-zone: UTC
+
+app:
+  jwt:
+    secret: gaslachispa-clase-secreto-local-0123456789abcdef
+    expiration-hours: 8
+  cors:
+    allowed-origins: http://localhost:3000
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs

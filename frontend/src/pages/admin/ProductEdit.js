@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Container, Card, Form, Button, Row, Col, Alert } from 'react-bootstrap';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useData } from '../../context/DataContext';
@@ -9,21 +9,24 @@ export default function ProductEdit() {
   const navigate = useNavigate();
 
   const original = productos.find((p) => p.id === id);
-  const [f, setF] = useState(() =>
-    original
-      ? {
-          nombre: original.nombre,
-          categoria: original.categoria,
-          peso: original.peso ?? '',
-          precio: original.precio,
-          stock: original.stock,
-          imagen: original.imagen,
-          descripcion: original.descripcion,
-          activo: original.activo,
-        }
-      : null
-  );
+  const [f, setF] = useState(null);
   const [errores, setErrores] = useState({});
+  const [errorServidor, setErrorServidor] = useState('');
+
+  useEffect(() => {
+    if (original && !f) {
+      setF({
+        nombre: original.nombre,
+        categoria: original.categoria,
+        peso: original.peso ?? '',
+        precio: original.precio,
+        stock: original.stock,
+        imagen: original.imagen,
+        descripcion: original.descripcion,
+        activo: original.activo,
+      });
+    }
+  }, [original, f]);
 
   if (!original || !f) {
     return (
@@ -53,7 +56,8 @@ export default function ProductEdit() {
     setErrores(errs);
     if (Object.keys(errs).length > 0) return;
 
-    actualizarProducto(id, {
+    setErrorServidor('');
+    const result = actualizarProducto(id, {
       nombre: f.nombre.trim(),
       categoria: f.categoria,
       peso: f.peso === '' ? null : Number(f.peso),
@@ -64,13 +68,20 @@ export default function ProductEdit() {
       activo: f.activo,
     });
 
-    navigate('/admin/productos');
+    const irALista = () => navigate('/admin/productos');
+    if (result && typeof result.then === 'function') {
+      result.then(irALista).catch((err) => setErrorServidor(err.message));
+      return;
+    }
+    irALista();
   };
 
   return (
     <Container className="my-4" style={{ maxWidth: 800 }}>
       <h2 className="fw-bold mb-1">✏️ Editar producto</h2>
       <p className="text-muted mb-4">Código: {original.id}</p>
+
+      {errorServidor && <Alert variant="danger">{errorServidor}</Alert>}
 
       <Card className="shadow-sm border-0">
         <Card.Body className="p-4">

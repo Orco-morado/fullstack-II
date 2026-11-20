@@ -13,6 +13,7 @@ export default function ProductNew() {
   const navigate = useNavigate();
   const [f, setF] = useState(vacio);
   const [errores, setErrores] = useState({});
+  const [errorServidor, setErrorServidor] = useState('');
 
   const set = (k) => (e) => {
     setF((prev) => ({ ...prev, [k]: e.target.value }));
@@ -30,7 +31,8 @@ export default function ProductNew() {
     setErrores(errs);
     if (Object.keys(errs).length > 0) return;
 
-    crearProducto({
+    setErrorServidor('');
+    const result = crearProducto({
       id: f.id.trim() || undefined,
       nombre: f.nombre.trim(),
       categoria: f.categoria,
@@ -41,12 +43,18 @@ export default function ProductNew() {
       descripcion: f.descripcion.trim(),
     });
 
-    navigate('/admin/productos');
+    const irALista = () => navigate('/admin/productos');
+    if (result && typeof result.then === 'function') {
+      result.then(irALista).catch((err) => setErrorServidor(err.message));
+      return;
+    }
+    irALista();
   };
 
   return (
     <Container className="my-4" style={{ maxWidth: 800 }}>
       <h2 className="fw-bold mb-4">➕ Producto nuevo</h2>
+      {errorServidor && <Alert variant="danger">{errorServidor}</Alert>}
       <Card className="shadow-sm border-0">
         <Card.Body className="p-4">
           <Form noValidate onSubmit={handleSubmit}>

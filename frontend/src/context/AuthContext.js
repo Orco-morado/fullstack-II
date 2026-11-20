@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { authenticate as dbAuthenticate, updateUser as dbUpdateUser } from '../data/db';
+import { USE_LOCAL, api, getToken, setToken, clearToken } from '../api';
 
 const SESSION_KEY = 'gasLaChispaSession';
 const AuthContext = createContext(null);
@@ -13,43 +14,132 @@ function readSession() {
   }
 }
 
+function clearSession() {
+  localStorage.removeItem(SESSION_KEY);
+  sessionStorage.removeItem(SESSION_KEY);
+}
+
+function sessionArea() {
+  return sessionStorage.getItem(SESSION_KEY) ? sessionStorage : localStorage;
+}
+
+function persistSession(session, remember) {
+  const storage = remember === true ? localStorage : remember === false ? sessionStorage : sessionArea();
+  const other = storage === localStorage ? sessionStorage : localStorage;
+  storage.setItem(SESSION_KEY, JSON.stringify(session));
+  other.removeItem(SESSION_KEY);
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => readSession());
 
-  const login = useCallback((email, password, remember = false) => {
-    const result = dbAuthenticate(email, password);
-    if (!result.ok) return result;
+  useEffect(() => {
+    if (USE_LOCAL) return;
 
-    const session = result.user;
-    setUser(session);
-    const storage = remember ? localStorage : sessionStorage;
-    storage.setItem(SESSION_KEY, JSON.stringify(session));
-    return { ok: true, user: session };
+    if (!getToken()) {
+      if (readSession()) {
+        clearSession();
+        setUser(null);
+      }
+      return;
+    }
+
+    let active = true;
+    api.get('/auth/me')
+      .then((actual) => {
+        if (!active) return;
+        setUser(actual);
+        persistSession(actual);
+      })
+      .catch(() => {
+        if (!active) return;
+        clearToken();
+        clearSession();
+        setUser(null);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const login = useCallback((email, password, remember = false) => {
+    if (USE_LOCAL) {
+      const result = dbAuthenticate(email, password);
+      if (!result.ok) return result;
+
+      const session = result.user;
+      setUser(session);
+      persistSession(session, remember);
+      return { ok: true, user: session };
+    }
+
+    return api
+      .post('/auth/login', { email, password }, { auth: false })
+      .then((res) => {
+        const session = res.usuario;
+        setToken(res.token, remember);
+        setUser(session);
+        persistSession(session, remember);
+        return { ok: true, user: session };
+      })
+      .catch((err) => ({ ok: false, error: err.message }));
   }, []);
 
   const logout = useCallback(() => {
     setUser(null);
-    localStorage.removeItem(SESSION_KEY);
-    sessionStorage.removeItem(SESSION_KEY);
+    clearSession();
+    clearToken();
   }, []);
 
   const updateUser = useCallback(
     (changes) => {
       if (!user?.id) return { ok: false, error: 'Sin sesión activa.' };
-      const updated = dbUpdateUser(user.id, changes);
-      if (!updated) return { ok: false, error: 'Usuario no encontrado.' };
-      const session = { ...updated, password: undefined };
-      setUser(session);
-      const raw = JSON.stringify(session);
-      const storage = sessionStorage.getItem(SESSION_KEY) ? sessionStorage : localStorage;
-      storage.setItem(SESSION_KEY, raw);
-      return { ok: true, user: session };
+
+      if (USE_LOCAL) {
+        const updated = dbUpdateUser(user.id, changes);
+        if (!updated) return { ok: false, error: 'Usuario no encontrado.' };
+        const session = { ...updated, password: undefined };
+        setUser(session);
+        persistSession(session);
+        return { ok: true, user: session };
+      }
+
+      const { password, ...perfil } = changes;
+      return api
+        .put('/auth/me', perfil)
+        .then((updated) => {
+          const session = { ...updated, password: undefined };
+          setUser(session);
+          persistSession(session);
+          return { ok: true, user: session };
+        })
+        .catch((err) => ({ ok: false, error: err.message }));
+    },
+    [user]
+  );
+
+  const changePassword = useCallback(
+    (actual, nueva) => {
+      if (!user?.id) return { ok: false, error: 'Sin sesión activa.' };
+
+      if (USE_LOCAL) {
+        const result = dbAuthenticate(user.email, actual);
+        if (!result.ok) return { ok: false, error: 'La contraseña actual no coincide.' };
+        const updated = dbUpdateUser(user.id, { password: nueva });
+        if (!updated) return { ok: false, error: 'Usuario no encontrado.' };
+        return { ok: true };
+      }
+
+      return api
+        .put('/auth/password', { actual, nueva })
+        .then(() => ({ ok: true }))
+        .catch((err) => ({ ok: false, error: err.message }));
     },
     [user]
   );
 
   useEffect(() => {
-    // sincroniza entre pestañas
     const onStorage = () => setUser(readSession());
     window.addEventListener('storage', onStorage);
     return () => window.removeEventListener('storage', onStorage);
@@ -60,6 +150,8 @@ export function AuthProvider({ children }) {
       case 'Administrador':
       case 'Operadora':
         return '/admin';
+      case 'Vendedor':
+        return '/vendedor';
       case 'Repartidor':
         return '/repartidor';
       default:
@@ -72,11 +164,13 @@ export function AuthProvider({ children }) {
     isAuthenticated: !!user,
     isAdmin: user?.rol === 'Administrador',
     isOperadora: user?.rol === 'Operadora',
+    isVendedor: user?.rol === 'Vendedor',
     isRepartidor: user?.rol === 'Repartidor',
     isCliente: user?.rol === 'Cliente',
     login,
     logout,
     updateUser,
+    changePassword,
     homePathFor,
   };
 
