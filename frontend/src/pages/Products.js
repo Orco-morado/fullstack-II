@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Container, Row, Col, Form, InputGroup, Button, Alert, Card } from 'react-bootstrap';
 import { useSearchParams } from 'react-router-dom';
 import { useData } from '../context/DataContext';
+import { useAuth } from '../context/AuthContext';
 import ProductCard from '../components/ProductCard';
 
 const ORDENES = {
@@ -13,6 +14,7 @@ const ORDENES = {
 
 export default function Products() {
   const { productos, categorias } = useData();
+  const { isVendedor } = useAuth();
   const [searchParams] = useSearchParams();
   const [busqueda, setBusqueda] = useState('');
   const [categoria, setCategoria] = useState(() => searchParams.get('categoria') || '');
@@ -99,7 +101,7 @@ export default function Products() {
         <Row className="g-4">
           {filtrados.map((p) => (
             <Col key={p.id} xs={12} sm={6} lg={4} xl={3}>
-              <ProductCard product={p} />
+              <ProductCard product={p} showAddButton={!isVendedor} />
             </Col>
           ))}
         </Row>

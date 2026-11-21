@@ -15,6 +15,8 @@ export function DataProvider({ children }) {
   const [pedidos, setPedidos] = useState(() => (USE_LOCAL ? db.getOrders() : []));
   const [ofertas, setOfertas] = useState(() => (USE_LOCAL ? db.getOffers() : []));
   const [blogs, setBlogs] = useState(() => (USE_LOCAL ? db.getPosts() : []));
+  const [loading, setLoading] = useState(!USE_LOCAL);
+  const [error, setError] = useState(null);
 
   const refresh = useCallback(async () => {
     if (USE_LOCAL) {
@@ -24,9 +26,13 @@ export function DataProvider({ children }) {
       setPedidos(db.getOrders());
       setOfertas(db.getOffers());
       setBlogs(db.getPosts());
+      setError(null);
+      setLoading(false);
       return;
     }
 
+    setLoading(true);
+    setError(null);
     try {
       const [prods, cats, offers, posts] = await Promise.all([
         api.get('/productos'),
@@ -52,7 +58,10 @@ export function DataProvider({ children }) {
         setUsuarios([]);
       }
     } catch (err) {
+      setError(err.message);
       console.warn('No se pudieron cargar los datos desde la API:', err.message);
+    } finally {
+      setLoading(false);
     }
   }, [isAuthenticated, canSeeUsers]);
 
@@ -96,6 +105,8 @@ export function DataProvider({ children }) {
     ofertas,
     blogs,
     stats,
+    loading,
+    error,
     refresh,
 
     crearProducto: (data) =>

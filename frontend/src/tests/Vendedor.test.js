@@ -2,6 +2,8 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { screen } from '@testing-library/react';
 import VendedorPanel from '../pages/vendedor/Panel';
+import Products from '../pages/Products';
+import ProductDetail from '../pages/ProductDetail';
 import Navigation from '../components/Navigation';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { renderWithProviders, clearStorage } from './helpers';
@@ -26,6 +28,15 @@ function RutasPanel() {
   return (
     <Routes>
       <Route path="/vendedor" element={<VendedorPanel />} />
+    </Routes>
+  );
+}
+
+function RutasCatalogo() {
+  return (
+    <Routes>
+      <Route path="/productos" element={<Products />} />
+      <Route path="/productos/:id" element={<ProductDetail />} />
     </Routes>
   );
 }
@@ -61,11 +72,28 @@ describe('Vendedor - panel de solo lectura', () => {
     expect(screen.getAllByText('GC-100001').length).toBeGreaterThan(0);
   });
 
-  it('la navegación muestra su panel y oculta el carrito', () => {
+  it('la navegación muestra panel, productos y pedidos, sin perfil ni carrito', () => {
     renderWithProviders(<Navigation />, { session: VENDEDOR });
 
     expect(screen.getByText('Panel de ventas')).toBeTruthy();
+    expect(screen.getByText('Productos')).toBeTruthy();
+    expect(screen.getByText('Pedidos')).toBeTruthy();
+    expect(screen.queryByText('Perfil')).toBeNull();
     expect(screen.queryByText(/Cart/)).toBeNull();
+  });
+
+  it('ve el catálogo sin botones de compra', () => {
+    renderWithProviders(<RutasCatalogo />, { route: '/productos', session: VENDEDOR });
+
+    expect(screen.getAllByText('Ver detalle').length).toBeGreaterThan(0);
+    expect(screen.queryByText('Añadir al carrito')).toBeNull();
+  });
+
+  it('ve el detalle del producto en modo consulta', () => {
+    renderWithProviders(<RutasCatalogo />, { route: '/productos/VOL-011', session: VENDEDOR });
+
+    expect(screen.getByText('Modo consulta')).toBeTruthy();
+    expect(screen.queryByText('Añadir al carrito')).toBeNull();
   });
 
   it('ProtectedRoute permite al vendedor', () => {

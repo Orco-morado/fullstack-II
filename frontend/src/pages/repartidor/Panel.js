@@ -4,10 +4,11 @@ import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 
 export default function Panel() {
-  const { pedidos, cambiarEstadoPedido, actualizarPedido } = useData();
+  const { pedidos, cambiarEstadoPedido } = useData();
   const { user } = useAuth();
-  const [filtro, setFiltro] = useState('pendiente');
+  const [filtro, setFiltro] = useState('asignado');
   const [mensaje, setMensaje] = useState(null);
+  const [error, setError] = useState(null);
 
   const mios = pedidos.filter((p) => p.repartidor === user?.nombre);
 
@@ -19,18 +20,20 @@ export default function Panel() {
     entregados: mios.filter((p) => p.estado === 'entregado').length,
   };
 
-  const avanzar = (pedido) => {
-    if (pedido.estado === 'asignado') {
-      cambiarEstadoPedido(pedido.id, 'camino');
-      setMensaje(`✓ Pedido ${pedido.id} marcado "en camino".`);
-    } else if (pedido.estado === 'camino') {
-      cambiarEstadoPedido(pedido.id, 'entregado');
-      setMensaje(`✓ Pedido ${pedido.id} entregado.`);
-    } else if (pedido.estado === 'pendiente') {
-      actualizarPedido(pedido.id, { repartidor: user.nombre, estado: 'asignado' });
-      setMensaje(`✓ Tomaste el pedido ${pedido.id}.`);
+  const avanzar = async (pedido) => {
+    setError(null);
+    try {
+      if (pedido.estado === 'asignado') {
+        await cambiarEstadoPedido(pedido.id, 'camino');
+        setMensaje(`✓ Pedido ${pedido.id} marcado "en camino".`);
+      } else if (pedido.estado === 'camino') {
+        await cambiarEstadoPedido(pedido.id, 'entregado');
+        setMensaje(`✓ Pedido ${pedido.id} entregado.`);
+      }
+      setTimeout(() => setMensaje(null), 3000);
+    } catch (err) {
+      setError(err.message);
     }
-    setTimeout(() => setMensaje(null), 3000);
   };
 
   return (
@@ -43,6 +46,7 @@ export default function Panel() {
       </div>
 
       {mensaje && <Alert variant="success">{mensaje}</Alert>}
+      {error && <Alert variant="danger">{error}</Alert>}
 
       <Row className="g-3 mb-4">
         <Col md={4}>
@@ -71,7 +75,6 @@ export default function Panel() {
             <h5 className="fw-bold mb-0">Pedidos asignados</h5>
             <Form.Select style={{ width: 200 }} value={filtro} onChange={(e) => setFiltro(e.target.value)}>
               <option value="todos">Todos</option>
-              <option value="pendiente">Pendiente</option>
               <option value="asignado">Asignado</option>
               <option value="camino">En camino</option>
               <option value="entregado">Entregado</option>
@@ -112,11 +115,6 @@ export default function Panel() {
                     </Badge>
                   </td>
                   <td>
-                    {p.estado === 'pendiente' && (
-                      <Button size="sm" variant="outline-primary" onClick={() => avanzar(p)}>
-                        Tomar
-                      </Button>
-                    )}
                     {p.estado === 'asignado' && (
                       <Button size="sm" variant="warning" onClick={() => avanzar(p)}>
                         🚚 Salir

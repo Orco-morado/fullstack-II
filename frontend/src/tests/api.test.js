@@ -95,4 +95,22 @@ describe('api.js - cliente HTTP', () => {
       message: 'El correo ya está registrado.',
     });
   });
+
+  it('emite auth:expired cuando una petición autenticada devuelve 401', async () => {
+    setToken('token-401', true);
+    const handler = jest.fn();
+    window.addEventListener('auth:expired', handler);
+    global.fetch.mockResolvedValue({
+      ok: false,
+      status: 401,
+      text: async () => JSON.stringify({ message: 'No autorizado' }),
+    });
+
+    try {
+      await expect(request('/pedidos')).rejects.toMatchObject({ status: 401 });
+      expect(handler).toHaveBeenCalled();
+    } finally {
+      window.removeEventListener('auth:expired', handler);
+    }
+  });
 });

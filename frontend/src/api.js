@@ -69,6 +69,9 @@ export async function request(path, options = {}) {
   }
 
   if (!response.ok) {
+    if (response.status === 401 && auth && typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('auth:expired'));
+    }
     const message = (data && data.message) || `Error ${response.status}`;
     const error = new Error(message);
     error.status = response.status;

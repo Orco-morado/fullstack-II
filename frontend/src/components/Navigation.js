@@ -38,7 +38,8 @@ export default function Navigation() {
           ) : esVendedor ? (
             <Nav className="me-auto">
               <Nav.Link as={Link} to="/vendedor">Panel de ventas</Nav.Link>
-              <Nav.Link as={Link} to="/admin/perfil">Perfil</Nav.Link>
+              <Nav.Link as={Link} to="/productos">Productos</Nav.Link>
+              <Nav.Link as={Link} to="/vendedor/pedidos">Pedidos</Nav.Link>
             </Nav>
           ) : esRepartidor ? (
             <Nav className="me-auto">
@@ -73,7 +74,7 @@ export default function Navigation() {
                 </Dropdown.Toggle>
                 <Dropdown.Menu>
                   <Dropdown.Item as={Link} to={homePathFor(user.rol)}>Mi panel</Dropdown.Item>
-                  <Dropdown.Item as={Link} to="/admin/perfil" hidden={!esInterno && !esVendedor}>Perfil</Dropdown.Item>
+                  <Dropdown.Item as={Link} to="/admin/perfil" hidden={!esInterno}>Perfil</Dropdown.Item>
                   <Dropdown.Divider />
                   <Dropdown.Item onClick={handleLogout}>Cerrar sesión</Dropdown.Item>
                 </Dropdown.Menu>

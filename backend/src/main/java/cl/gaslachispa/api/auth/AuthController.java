@@ -2,6 +2,7 @@ package cl.gaslachispa.api.auth;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -34,6 +35,12 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED).body(authService.registro(request));
     }
 
+    @PostMapping("/refresh")
+    @SecurityRequirement(name = "bearerAuth")
+    public LoginResponse refresh(Authentication authentication) {
+        return authService.refresh(authentication);
+    }
+
     @GetMapping("/me")
     @SecurityRequirement(name = "bearerAuth")
     public Usuario me(Authentication authentication) {
@@ -42,12 +49,14 @@ public class AuthController {
 
     @PutMapping("/me")
     @SecurityRequirement(name = "bearerAuth")
+    @PreAuthorize("hasAnyRole('Administrador', 'Operadora', 'Cliente', 'Repartidor')")
     public Usuario actualizarPerfil(@Valid @RequestBody PerfilRequest request, Authentication authentication) {
         return authService.actualizarPerfil(request, authentication);
     }
 
     @PutMapping("/password")
     @SecurityRequirement(name = "bearerAuth")
+    @PreAuthorize("hasAnyRole('Administrador', 'Operadora', 'Cliente', 'Repartidor')")
     public ResponseEntity<Void> changePassword(@Valid @RequestBody PasswordRequest request,
             Authentication authentication) {
         authService.changePassword(request, authentication);

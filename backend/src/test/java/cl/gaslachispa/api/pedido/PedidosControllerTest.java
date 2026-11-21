@@ -1,5 +1,6 @@
 package cl.gaslachispa.api.pedido;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -9,6 +10,7 @@ import cl.gaslachispa.api.support.ApiTestSupport;
 
 import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -82,7 +84,7 @@ class PedidosControllerTest extends ApiTestSupport {
     }
 
     @Test
-    void clienteCreaPedidoConSuPropioId() throws Exception {
+    void clienteCreaPedidoConSuPropioIdYTotalCalculado() throws Exception {
         String token = token("cliente@gmail.com", "cliente123");
         String body = objectMapper.writeValueAsString(pedidoNuevo());
 
@@ -94,7 +96,102 @@ class PedidosControllerTest extends ApiTestSupport {
                 .andExpect(jsonPath("$.id", startsWith("GC-")))
                 .andExpect(jsonPath("$.clienteId").value("U-004"))
                 .andExpect(jsonPath("$.estado").value("recibido"))
-                .andExpect(jsonPath("$.pago").value("efectivo"));
+                .andExpect(jsonPath("$.pago").value("efectivo"))
+                .andExpect(jsonPath("$.total").value(40000))
+                .andExpect(jsonPath("$.repartidor").value(nullValue()));
+    }
+
+    @Test
+    void clienteNoPuedeForzarEstadoNiRepartidor() throws Exception {
+        String token = token("cliente@gmail.com", "cliente123");
+        Map<String, Object> pedido = new HashMap<>(pedidoNuevo());
+        pedido.put("estado", "entregado");
+        pedido.put("repartidor", "Carlos Rojas");
+        String body = objectMapper.writeValueAsString(pedido);
+
+        mockMvc.perform(post("/api/v1/pedidos")
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.estado").value("recibido"))
+                .andExpect(jsonPath("$.repartidor").value(nullValue()));
+    }
+
+    @Test
+    void crearPedidoDescuentaStock() throws Exception {
+        String token = token("cliente@gmail.com", "cliente123");
+        String body = objectMapper.writeValueAsString(pedidoNuevo());
+
+        mockMvc.perform(post("/api/v1/pedidos")
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/v1/productos/VOL-011"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.stock").value(83));
+    }
+
+    @Test
+    void crearPedidoConStockInsuficienteDevuelve400() throws Exception {
+        String token = token("cliente@gmail.com", "cliente123");
+        Map<String, Object> pedido = new HashMap<>(pedidoNuevo());
+        pedido.put("cantidad", 9999);
+        String body = objectMapper.writeValueAsString(pedido);
+
+        mockMvc.perform(post("/api/v1/pedidos")
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void crearPedidoConProductoInexistenteDevuelve400() throws Exception {
+        String token = token("cliente@gmail.com", "cliente123");
+        Map<String, Object> pedido = new HashMap<>(pedidoNuevo());
+        pedido.put("productoId", "NO-EXISTE");
+        String body = objectMapper.writeValueAsString(pedido);
+
+        mockMvc.perform(post("/api/v1/pedidos")
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void adminCreaPedidoAsignadoConRepartidorValido() throws Exception {
+        String token = token("admin@gmail.com", "admin123");
+        Map<String, Object> pedido = new HashMap<>(pedidoNuevo());
+        pedido.put("estado", "asignado");
+        pedido.put("repartidor", "Carlos Rojas");
+        String body = objectMapper.writeValueAsString(pedido);
+
+        mockMvc.perform(post("/api/v1/pedidos")
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.estado").value("asignado"))
+                .andExpect(jsonPath("$.repartidor").value("Carlos Rojas"));
+    }
+
+    @Test
+    void adminNoPuedeAsignarRepartidorInexistente() throws Exception {
+        String token = token("admin@gmail.com", "admin123");
+        Map<String, Object> pedido = new HashMap<>(pedidoNuevo());
+        pedido.put("estado", "asignado");
+        pedido.put("repartidor", "No Existe");
+        String body = objectMapper.writeValueAsString(pedido);
+
+        mockMvc.perform(post("/api/v1/pedidos")
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -156,14 +253,26 @@ class PedidosControllerTest extends ApiTestSupport {
     @Test
     void adminCambiaEstadoDeCualquierPedido() throws Exception {
         String token = token("admin@gmail.com", "admin123");
-        String body = objectMapper.writeValueAsString(Map.of("estado", "asignado"));
+        String body = objectMapper.writeValueAsString(Map.of("estado", "camino"));
 
-        mockMvc.perform(put("/api/v1/pedidos/GC-100003/estado")
+        mockMvc.perform(put("/api/v1/pedidos/GC-100004/estado")
                         .header("Authorization", bearer(token))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.estado").value("asignado"));
+                .andExpect(jsonPath("$.estado").value("camino"));
+    }
+
+    @Test
+    void adminNoPuedeRetrocederEstado() throws Exception {
+        String token = token("admin@gmail.com", "admin123");
+        String body = objectMapper.writeValueAsString(Map.of("estado", "camino"));
+
+        mockMvc.perform(put("/api/v1/pedidos/GC-100001/estado")
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

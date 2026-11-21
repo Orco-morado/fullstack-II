@@ -90,13 +90,14 @@ function App() {
                 <Route path="/admin/usuarios/:id/editar" element={<ProtectedRoute roles={ROLES_ADMIN}><UserEdit /></ProtectedRoute>} />
                 <Route path="/admin/usuarios/:id/historial" element={<ProtectedRoute roles={ROLES_ADMIN}><UserHistory /></ProtectedRoute>} />
                 <Route path="/admin/reportes" element={<ProtectedRoute roles={ROLES_ADMIN}><Reports /></ProtectedRoute>} />
-                <Route path="/admin/perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                <Route path="/admin/perfil" element={<ProtectedRoute roles={ROLES_ADMIN}><Profile /></ProtectedRoute>} />
 
                 {/* Repartidor */}
                 <Route path="/repartidor" element={<ProtectedRoute roles={['Repartidor']}><RepartidorPanel /></ProtectedRoute>} />
 
                 {/* Vendedor */}
                 <Route path="/vendedor" element={<ProtectedRoute roles={['Vendedor']}><VendedorPanel /></ProtectedRoute>} />
+                <Route path="/vendedor/pedidos" element={<ProtectedRoute roles={['Vendedor']}><Orders readOnly /></ProtectedRoute>} />
 
                 <Route path="*" element={<NotFound />} />
               </Route>

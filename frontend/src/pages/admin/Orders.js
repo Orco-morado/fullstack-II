@@ -1,43 +1,91 @@
 import React, { useState } from 'react';
-import { Container, Table, Button, Badge, Form, Modal, Row, Col, Card } from 'react-bootstrap';
+import { Container, Table, Button, Badge, Form, Modal, Row, Col, Card, Alert } from 'react-bootstrap';
 import { useData } from '../../context/DataContext';
 import StatusBadge from '../../components/StatusBadge';
 
-const REPARTIDORES = ['Carlos Rojas', 'María López', 'Jorge Díaz'];
+const FILTROS = [
+  { key: 'todos', label: 'Total', color: 'primary' },
+  { key: 'recibido', label: 'Pendientes', color: 'secondary' },
+  { key: 'asignado', label: 'Asignados', color: 'info' },
+  { key: 'camino', label: 'En camino', color: 'warning' },
+  { key: 'entregado', label: 'Entregados', color: 'success' },
+];
 
-export default function Orders() {
-  const { pedidos, cambiarEstadoPedido, asignarPedido, crearPedido, productos } = useData();
+export default function Orders({ readOnly = false }) {
+  const { pedidos, usuarios, cambiarEstadoPedido, asignarPedido, crearPedido, productos } = useData();
   const [filtro, setFiltro] = useState('todos');
   const [asignarId, setAsignarId] = useState(null);
+  const [repartidorSeleccionado, setRepartidorSeleccionado] = useState('');
   const [nuevoOpen, setNuevoOpen] = useState(false);
+  const [detalle, setDetalle] = useState(null);
+  const [error, setError] = useState(null);
 
+  const repartidores = usuarios.filter((u) => u.rol === 'Repartidor' && u.estado === 'activo');
   const lista = filtro === 'todos' ? pedidos : pedidos.filter((p) => p.estado === filtro);
 
   const contar = (estado) =>
     estado === 'todos' ? pedidos.length : pedidos.filter((p) => p.estado === estado).length;
 
+  const ejecutar = async (accion) => {
+    setError(null);
+    try {
+      await accion();
+      return true;
+    } catch (err) {
+      setError(err.message);
+      return false;
+    }
+  };
+
+  const abrirAsignacion = (id) => {
+    setError(null);
+    setAsignarId(id);
+    setRepartidorSeleccionado(repartidores[0]?.nombre || '');
+  };
+
+  const confirmarAsignacion = async () => {
+    if (!repartidorSeleccionado) {
+      setError('No hay repartidores disponibles.');
+      return;
+    }
+    const ok = await ejecutar(() => asignarPedido(asignarId, repartidorSeleccionado));
+    if (ok) setAsignarId(null);
+  };
+
   return (
     <Container fluid className="px-lg-5 my-4">
       <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
-          <h2 className="fw-bold mb-0">📋 Órdenes del día</h2>
-          <small className="text-muted">{new Date().toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</small>
+          <h2 className="fw-bold mb-0">{readOnly ? '📋 Pedidos' : '📋 Órdenes del día'}</h2>
+          <small className="text-muted">
+            {new Date().toLocaleDateString('es-CL', {
+              weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+            })}
+          </small>
         </div>
-        <Button variant="warning" className="fw-bold" onClick={() => setNuevoOpen(true)}>
-          + Nuevo Pedido
-        </Button>
+        {readOnly ? (
+          <Badge bg="secondary" className="fs-6">Solo lectura</Badge>
+        ) : (
+          <Button variant="warning" className="fw-bold" onClick={() => setNuevoOpen(true)}>
+            + Nuevo Pedido
+          </Button>
+        )}
       </div>
 
+      {error && (
+        <Alert variant="danger" dismissible onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
+
       <Row className="g-3 mb-4">
-        {[
-          ['todos', 'Total', 'primary'],
-          ['recibido', 'Pendientes', 'secondary'],
-          ['asignado', 'Asignados', 'info'],
-          ['camino', 'En camino', 'warning'],
-          ['entregado', 'Entregados', 'success'],
-        ].map(([key, label, color]) => (
+        {FILTROS.map(({ key, label, color }) => (
           <Col key={key} xs={6} md={2} className="d-grid">
-            <Card className={`border-0 bg-${color} text-center p-2`} style={{ cursor: 'pointer' }} onClick={() => setFiltro(key)}>
+            <Card
+              className={`border-0 bg-${color} text-center p-2`}
+              style={{ cursor: 'pointer' }}
+              onClick={() => setFiltro(key)}
+            >
               <div className="fw-bold">{contar(key)}</div>
               <small>{label}</small>
             </Card>
@@ -49,14 +97,14 @@ export default function Orders() {
         <Card.Body>
           <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
             <h5 className="fw-bold mb-0">Lista de pedidos</h5>
-            <div className="btn-group btn-group-sm">
-              {['todos', 'recibido', 'camino', 'entregado'].map((f) => (
+            <div className="btn-group btn-group-sm flex-wrap">
+              {FILTROS.map(({ key, label }) => (
                 <Button
-                  key={f}
-                  variant={filtro === f ? 'warning' : 'outline-dark'}
-                  onClick={() => setFiltro(f)}
+                  key={key}
+                  variant={filtro === key ? 'warning' : 'outline-dark'}
+                  onClick={() => setFiltro(key)}
                 >
-                  {f === 'todos' ? 'Todos' : f === 'recibido' ? 'Pendientes' : f === 'camino' ? 'En camino' : 'Entregados'}
+                  {key === 'todos' ? 'Todos' : label}
                 </Button>
               ))}
             </div>
@@ -66,12 +114,16 @@ export default function Orders() {
             <thead className="table-dark">
               <tr>
                 <th>#</th><th>Cliente</th><th>Producto</th><th>Comuna</th>
-                <th>Estado</th><th>Repartidor</th><th>Acción</th>
+                <th>Total</th><th>Estado</th><th>Repartidor</th><th>Acción</th>
               </tr>
             </thead>
             <tbody>
               {lista.length === 0 && (
-                <tr><td colSpan={7} className="text-center text-muted py-4">No hay pedidos en esta categoría</td></tr>
+                <tr>
+                  <td colSpan={8} className="text-center text-muted py-4">
+                    No hay pedidos en esta categoría
+                  </td>
+                </tr>
               )}
               {lista.map((p) => (
                 <tr key={p.id}>
@@ -79,21 +131,43 @@ export default function Orders() {
                   <td>{p.cliente}<br /><small className="text-muted">{p.fono}</small></td>
                   <td>{p.producto} x{p.cantidad}</td>
                   <td>{p.comuna}</td>
+                  <td>$ {p.total.toLocaleString('es-CL')}</td>
                   <td><StatusBadge estado={p.estado} /></td>
                   <td>{p.repartidor || <span className="text-muted">Sin asignar</span>}</td>
                   <td>
-                    {p.estado === 'recibido' && (
-                      <Button size="sm" variant="warning" className="fw-bold" onClick={() => setAsignarId(p.id)}>
+                    <Button
+                      size="sm"
+                      variant="outline-dark"
+                      className="me-1"
+                      onClick={() => setDetalle(p)}
+                    >
+                      Ver
+                    </Button>
+                    {!readOnly && p.estado === 'recibido' && (
+                      <Button
+                        size="sm"
+                        variant="warning"
+                        className="fw-bold"
+                        onClick={() => abrirAsignacion(p.id)}
+                      >
                         Asignar
                       </Button>
                     )}
-                    {p.estado === 'asignado' && (
-                      <Button size="sm" variant="outline-warning" onClick={() => cambiarEstadoPedido(p.id, 'camino')}>
+                    {!readOnly && p.estado === 'asignado' && (
+                      <Button
+                        size="sm"
+                        variant="outline-warning"
+                        onClick={() => ejecutar(() => cambiarEstadoPedido(p.id, 'camino'))}
+                      >
                         Iniciar ruta
                       </Button>
                     )}
-                    {p.estado === 'camino' && (
-                      <Button size="sm" variant="success" onClick={() => cambiarEstadoPedido(p.id, 'entregado')}>
+                    {!readOnly && p.estado === 'camino' && (
+                      <Button
+                        size="sm"
+                        variant="success"
+                        onClick={() => ejecutar(() => cambiarEstadoPedido(p.id, 'entregado'))}
+                      >
                         Entregado
                       </Button>
                     )}
@@ -106,7 +180,6 @@ export default function Orders() {
         </Card.Body>
       </Card>
 
-      {/* Modal asignar repartidor */}
       <Modal show={!!asignarId} onHide={() => setAsignarId(null)}>
         <Modal.Header closeButton>
           <Modal.Title>Asignar Repartidor</Modal.Title>
@@ -114,9 +187,13 @@ export default function Orders() {
         <Modal.Body>
           <p>Pedido: <strong>{asignarId}</strong></p>
           <Form.Label>Seleccionar repartidor:</Form.Label>
-          <Form.Select id="selectRepartidor">
-            {REPARTIDORES.map((r) => (
-              <option key={r} value={r}>{r}</option>
+          <Form.Select
+            value={repartidorSeleccionado}
+            onChange={(e) => setRepartidorSeleccionado(e.target.value)}
+          >
+            {repartidores.length === 0 && <option value="">Sin repartidores disponibles</option>}
+            {repartidores.map((r) => (
+              <option key={r.id} value={r.nombre}>{r.nombre}</option>
             ))}
           </Form.Select>
         </Modal.Body>
@@ -125,56 +202,118 @@ export default function Orders() {
           <Button
             variant="warning"
             className="fw-bold"
-            onClick={() => {
-              const sel = document.getElementById('selectRepartidor').value;
-              asignarPedido(asignarId, sel);
-              setAsignarId(null);
-            }}
+            disabled={!repartidorSeleccionado}
+            onClick={confirmarAsignacion}
           >
             Asignar
           </Button>
         </Modal.Footer>
       </Modal>
 
-      {/* Modal nuevo pedido manual */}
-      <NuevoPedidoModal
-        show={nuevoOpen}
-        onHide={() => setNuevoOpen(false)}
-        productos={productos}
-        onCreate={crearPedido}
-      />
+      <Modal show={!!detalle} onHide={() => setDetalle(null)} size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>Detalle del pedido {detalle?.id}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {detalle && (
+            <Row className="g-3">
+              <Col md={6}><strong>Cliente:</strong> {detalle.cliente}</Col>
+              <Col md={6}><strong>Teléfono:</strong> {detalle.fono || 'Sin teléfono'}</Col>
+              <Col md={6}><strong>Comuna:</strong> {detalle.comuna}</Col>
+              <Col md={6}><strong>Dirección:</strong> {detalle.direccion}</Col>
+              <Col md={6}><strong>Producto:</strong> {detalle.producto}</Col>
+              <Col md={6}><strong>Cantidad:</strong> {detalle.cantidad}</Col>
+              <Col md={6}><strong>Total:</strong> $ {detalle.total.toLocaleString('es-CL')}</Col>
+              <Col md={6}><strong>Pago:</strong> {detalle.pago}</Col>
+              <Col md={6}><strong>Estado:</strong> <StatusBadge estado={detalle.estado} /></Col>
+              <Col md={6}><strong>Repartidor:</strong> {detalle.repartidor || 'Sin asignar'}</Col>
+              <Col md={12}>
+                <strong>Fecha:</strong>{' '}
+                {detalle.fecha ? new Date(detalle.fecha).toLocaleString('es-CL') : 'Sin fecha'}
+              </Col>
+            </Row>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setDetalle(null)}>Cerrar</Button>
+        </Modal.Footer>
+      </Modal>
+
+      {!readOnly && (
+        <NuevoPedidoModal
+          show={nuevoOpen}
+          onHide={() => setNuevoOpen(false)}
+          productos={productos}
+          repartidores={repartidores}
+          onCreate={crearPedido}
+        />
+      )}
     </Container>
   );
 }
 
-function NuevoPedidoModal({ show, onHide, productos, onCreate }) {
+function NuevoPedidoModal({ show, onHide, productos, repartidores, onCreate }) {
   const [f, setF] = useState({
-    cliente: '', fono: '', comuna: 'Chillan', direccion: '',
-    productoId: productos[0]?.id || '', cantidad: 1, repartidor: '',
+    cliente: '',
+    fono: '',
+    comuna: 'Chillan',
+    direccion: '',
+    productoId: productos[0]?.id || '',
+    cantidad: 1,
+    repartidor: '',
   });
+  const [error, setError] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   const set = (k) => (e) => setF((prev) => ({ ...prev, [k]: e.target.value }));
+  const productoId = f.productoId || productos[0]?.id || '';
 
-  const handleCreate = () => {
-    if (!f.cliente.trim() || !f.direccion.trim()) {
-      alert('Completa cliente y dirección.');
+  const handleCreate = async () => {
+    const prod = productos.find((p) => p.id === productoId);
+    if (!prod) {
+      setError('No hay productos disponibles.');
       return;
     }
-    const prod = productos.find((p) => p.id === f.productoId);
-    onCreate({
-      cliente: f.cliente.trim(),
-      fono: f.fono.trim(),
-      comuna: f.comuna,
-      direccion: f.direccion.trim(),
-      productoId: prod.id,
-      producto: prod.nombre,
-      cantidad: Number(f.cantidad),
-      total: prod.precio * Number(f.cantidad),
-      estado: f.repartidor ? 'asignado' : 'recibido',
-      repartidor: f.repartidor || null,
-    });
-    setF({ ...f, cliente: '', fono: '', direccion: '', cantidad: 1, repartidor: '' });
-    onHide();
+    if (!f.cliente.trim() || !f.direccion.trim()) {
+      setError('Completa cliente y dirección.');
+      return;
+    }
+    const cantidad = Number(f.cantidad);
+    if (!Number.isInteger(cantidad) || cantidad <= 0) {
+      setError('La cantidad debe ser mayor a cero.');
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    try {
+      await onCreate({
+        cliente: f.cliente.trim(),
+        fono: f.fono.trim(),
+        comuna: f.comuna,
+        direccion: f.direccion.trim(),
+        productoId: prod.id,
+        producto: prod.nombre,
+        cantidad,
+        total: prod.precio * cantidad,
+        estado: f.repartidor ? 'asignado' : 'recibido',
+        repartidor: f.repartidor || null,
+      });
+      setF({
+        cliente: '',
+        fono: '',
+        comuna: 'Chillan',
+        direccion: '',
+        productoId: productos[0]?.id || '',
+        cantidad: 1,
+        repartidor: '',
+      });
+      onHide();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -183,6 +322,7 @@ function NuevoPedidoModal({ show, onHide, productos, onCreate }) {
         <Modal.Title>Nuevo Pedido Manual</Modal.Title>
       </Modal.Header>
       <Modal.Body>
+        {error && <Alert variant="danger">{error}</Alert>}
         <Row className="g-3">
           <Col md={6}>
             <Form.Label>Cliente *</Form.Label>
@@ -206,9 +346,12 @@ function NuevoPedidoModal({ show, onHide, productos, onCreate }) {
           </Col>
           <Col md={5}>
             <Form.Label>Producto</Form.Label>
-            <Form.Select value={f.productoId} onChange={set('productoId')}>
+            <Form.Select value={productoId} onChange={set('productoId')}>
+              {productos.length === 0 && <option value="">Sin productos</option>}
               {productos.map((p) => (
-                <option key={p.id} value={p.id}>{p.nombre} - ${p.precio.toLocaleString('es-CL')}</option>
+                <option key={p.id} value={p.id}>
+                  {p.nombre} - ${p.precio.toLocaleString('es-CL')}
+                </option>
               ))}
             </Form.Select>
           </Col>
@@ -220,16 +363,18 @@ function NuevoPedidoModal({ show, onHide, productos, onCreate }) {
             <Form.Label>Repartidor</Form.Label>
             <Form.Select value={f.repartidor} onChange={set('repartidor')}>
               <option value="">Sin asignar aún</option>
-              {REPARTIDORES.map((r) => (
-                <option key={r} value={r}>{r}</option>
+              {repartidores.map((r) => (
+                <option key={r.id} value={r.nombre}>{r.nombre}</option>
               ))}
             </Form.Select>
           </Col>
         </Row>
       </Modal.Body>
       <Modal.Footer>
-        <Button variant="secondary" onClick={onHide}>Cancelar</Button>
-        <Button variant="warning" className="fw-bold" onClick={handleCreate}>Guardar Pedido</Button>
+        <Button variant="secondary" onClick={onHide} disabled={saving}>Cancelar</Button>
+        <Button variant="warning" className="fw-bold" onClick={handleCreate} disabled={saving}>
+          {saving ? 'Guardando...' : 'Guardar Pedido'}
+        </Button>
       </Modal.Footer>
     </Modal>
   );

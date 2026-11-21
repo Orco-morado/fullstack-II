@@ -92,7 +92,9 @@ public class ProductosController {
         if (changes.getCategoria() != null) {
             producto.setCategoria(changes.getCategoria());
         }
-        producto.setPeso(changes.getPeso());
+        if (changes.getPeso() != null) {
+            producto.setPeso(changes.getPeso());
+        }
         if (changes.getPrecio() != null) {
             producto.setPrecio(changes.getPrecio());
         }

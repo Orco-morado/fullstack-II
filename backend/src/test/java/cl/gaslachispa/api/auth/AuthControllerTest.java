@@ -55,6 +55,36 @@ class AuthControllerTest extends ApiTestSupport {
     }
 
     @Test
+    void refreshDevuelveTokenNuevo() throws Exception {
+        String token = token("cliente@gmail.com", "cliente123");
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .header("Authorization", bearer(token)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").isNotEmpty())
+                .andExpect(jsonPath("$.usuario.email").value("cliente@gmail.com"))
+                .andExpect(jsonPath("$.usuario.password").doesNotExist());
+    }
+
+    @Test
+    void refreshSinTokenDevuelve401() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/refresh"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void vendedorNoPuedeActualizarSuPerfil() throws Exception {
+        String token = token("vendedor@gmail.com", "vendedor1");
+        String body = objectMapper.writeValueAsString(Map.of("nombre", "Valentina Modificada"));
+
+        mockMvc.perform(put("/api/v1/auth/me")
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     void meConTokenDevuelveUsuario() throws Exception {
         mockMvc.perform(get("/api/v1/auth/me")
                         .header("Authorization", bearer(token("admin@gmail.com", "admin123"))))

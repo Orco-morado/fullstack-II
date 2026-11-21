@@ -1,19 +1,29 @@
 import React, { useState } from 'react';
-import { Container, Row, Col, Badge, Button, Form, Alert, Card, ListGroup } from 'react-bootstrap';
+import { Container, Row, Col, Badge, Button, Form, Alert, Card, ListGroup, Spinner } from 'react-bootstrap';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useData } from '../context/DataContext';
+import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { estadoStock } from '../components/ProductCard';
 
 export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { productos } = useData();
+  const { productos, loading } = useData();
+  const { isVendedor } = useAuth();
   const { addItem } = useCart();
   const [cantidad, setCantidad] = useState(1);
   const [agregado, setAgregado] = useState(false);
 
   const producto = productos.find((p) => p.id === id);
+
+  if (loading) {
+    return (
+      <Container className="my-5 text-center">
+        <Spinner animation="border" variant="warning" />
+      </Container>
+    );
+  }
 
   if (!producto) {
     return (
@@ -76,7 +86,9 @@ export default function ProductDetail() {
             {producto.categoria === 'Granel' && <small className="text-muted fs-6"> /litro</small>}
           </h2>
 
-          {producto.stock > 0 && (
+          {isVendedor && <Badge bg="secondary" className="mb-3">Modo consulta</Badge>}
+
+          {!isVendedor && producto.stock > 0 && (
             <div className="d-flex align-items-center gap-3 my-4">
               <Form.Label className="mb-0 fw-bold">Cantidad:</Form.Label>
               <div className="d-flex align-items-center">
@@ -105,20 +117,22 @@ export default function ProductDetail() {
             </div>
           )}
 
-          <div className="d-grid gap-2">
-            <Button
-              variant="warning"
-              size="lg"
-              className="fw-bold"
-              disabled={producto.stock <= 0}
-              onClick={handleAdd}
-            >
-              Añadir al carrito
-            </Button>
-            <Button variant="outline-dark" onClick={() => navigate('/carrito')}>
-              Ir al carrito
-            </Button>
-          </div>
+          {!isVendedor && (
+            <div className="d-grid gap-2">
+              <Button
+                variant="warning"
+                size="lg"
+                className="fw-bold"
+                disabled={producto.stock <= 0}
+                onClick={handleAdd}
+              >
+                Añadir al carrito
+              </Button>
+              <Button variant="outline-dark" onClick={() => navigate('/carrito')}>
+                Ir al carrito
+              </Button>
+            </div>
+          )}
 
           {agregado && (
             <Alert variant="success" className="mt-3">

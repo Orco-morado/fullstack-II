@@ -38,6 +38,11 @@ public class AuthService {
         return new LoginResponse(jwtService.generateToken(usuario), usuario);
     }
 
+    public LoginResponse refresh(Authentication authentication) {
+        Usuario usuario = me(authentication);
+        return new LoginResponse(jwtService.generateToken(usuario), usuario);
+    }
+
     public LoginResponse registro(RegistroRequest request) {
         if (usuarioRepository.existsByEmailIgnoreCase(request.getEmail())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "El correo ya está registrado.");

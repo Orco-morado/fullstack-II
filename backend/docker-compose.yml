@@ -1,7 +1,7 @@
 services:
   mysql:
     image: mysql:8.0
-    container_name: gaslachispa-mysql
+    container_name: db-gas-la-chispa
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: root123

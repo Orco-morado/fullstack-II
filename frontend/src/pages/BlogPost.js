@@ -1,14 +1,22 @@
 import React from 'react';
-import { Container, Badge, Button, Card, Row, Col, Alert } from 'react-bootstrap';
+import { Container, Badge, Button, Card, Row, Col, Alert, Spinner } from 'react-bootstrap';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 
 export default function BlogPost() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { blogs } = useData();
+  const { blogs, loading } = useData();
 
   const post = blogs.find((b) => b.id === id);
+
+  if (loading) {
+    return (
+      <Container className="my-5 text-center">
+        <Spinner animation="border" variant="warning" />
+      </Container>
+    );
+  }
 
   if (!post) {
     return (

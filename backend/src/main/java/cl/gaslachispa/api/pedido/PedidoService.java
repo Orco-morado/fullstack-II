@@ -2,13 +2,18 @@ package cl.gaslachispa.api.pedido;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import cl.gaslachispa.api.producto.Producto;
+import cl.gaslachispa.api.producto.ProductoRepository;
 import cl.gaslachispa.api.usuario.Usuario;
 import cl.gaslachispa.api.usuario.UsuarioRepository;
 
@@ -16,13 +21,22 @@ import cl.gaslachispa.api.usuario.UsuarioRepository;
 public class PedidoService {
 
     private static final Set<String> ESTADOS = Set.of("recibido", "asignado", "camino", "entregado");
+    private static final Set<String> PAGOS = Set.of("efectivo", "transferencia");
+    private static final Map<String, Set<String>> TRANSICIONES = Map.of(
+            "recibido", Set.of("asignado"),
+            "asignado", Set.of("camino"),
+            "camino", Set.of("entregado"),
+            "entregado", Set.of());
 
     private final PedidoRepository pedidoRepository;
     private final UsuarioRepository usuarioRepository;
+    private final ProductoRepository productoRepository;
 
-    public PedidoService(PedidoRepository pedidoRepository, UsuarioRepository usuarioRepository) {
+    public PedidoService(PedidoRepository pedidoRepository, UsuarioRepository usuarioRepository,
+            ProductoRepository productoRepository) {
         this.pedidoRepository = pedidoRepository;
         this.usuarioRepository = usuarioRepository;
+        this.productoRepository = productoRepository;
     }
 
     public List<Pedido> listar(Authentication authentication) {
@@ -49,19 +63,31 @@ public class PedidoService {
                 .toList();
     }
 
+    @Transactional
     public Pedido crear(Pedido data, Authentication authentication) {
         Usuario actual = actual(authentication);
         require(data.getCliente(), "El nombre del cliente es requerido.");
         require(data.getComuna(), "La comuna es requerida.");
         require(data.getDireccion(), "La dirección es requerida.");
         require(data.getProductoId(), "El producto es requerido.");
-        require(data.getProducto(), "El nombre del producto es requerido.");
         if (data.getCantidad() == null || data.getCantidad() <= 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La cantidad debe ser mayor a cero.");
         }
-        if (data.getTotal() == null || data.getTotal() < 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El total no es válido.");
+
+        Producto producto = productoRepository.findById(data.getProductoId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Producto no encontrado."));
+        if (Boolean.FALSE.equals(producto.getActivo())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El producto no está disponible.");
         }
+        int stock = producto.getStock() == null ? 0 : producto.getStock();
+        if (stock < data.getCantidad()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Stock insuficiente para el producto.");
+        }
+
+        int precio = producto.getPrecio() == null ? 0 : producto.getPrecio();
+        data.setProducto(producto.getNombre());
+        data.setTotal(precio * data.getCantidad());
+        data.setPago(normalizarPago(data.getPago()));
 
         if (data.getId() == null || data.getId().isBlank()) {
             data.setId(nextId());
@@ -71,23 +97,36 @@ public class PedidoService {
 
         if ("Cliente".equals(actual.getRol())) {
             data.setClienteId(actual.getId());
-        }
-        if (data.getEstado() == null || data.getEstado().isBlank()) {
             data.setEstado("recibido");
-        }
-        validarEstado(data.getEstado());
-        if (data.getPago() == null || data.getPago().isBlank()) {
-            data.setPago("efectivo");
-        }
-        if (data.getFecha() == null || data.getFecha().isBlank()) {
-            data.setFecha(Instant.now().toString());
-        }
-        if (data.getRepartidor() != null && data.getRepartidor().isBlank()) {
             data.setRepartidor(null);
+            data.setFecha(Instant.now().toString());
+        } else {
+            if (data.getEstado() == null || data.getEstado().isBlank()) {
+                data.setEstado("recibido");
+            }
+            validarEstado(data.getEstado());
+            if (data.getRepartidor() != null && !data.getRepartidor().isBlank()) {
+                validarRepartidor(data.getRepartidor());
+                if ("recibido".equals(data.getEstado())) {
+                    data.setEstado("asignado");
+                }
+            } else {
+                data.setRepartidor(null);
+            }
+            if ("asignado".equals(data.getEstado()) && data.getRepartidor() == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Debes asignar un repartidor.");
+            }
+            if (data.getFecha() == null || data.getFecha().isBlank()) {
+                data.setFecha(Instant.now().toString());
+            }
         }
+
+        producto.setStock(stock - data.getCantidad());
+        productoRepository.save(producto);
         return pedidoRepository.save(data);
     }
 
+    @Transactional
     public Pedido actualizar(String id, Pedido changes) {
         Pedido pedido = find(id);
         if (changes.getClienteId() != null) {
@@ -105,31 +144,35 @@ public class PedidoService {
         if (changes.getDireccion() != null) {
             pedido.setDireccion(changes.getDireccion());
         }
-        if (changes.getProductoId() != null) {
-            pedido.setProductoId(changes.getProductoId());
-        }
-        if (changes.getProducto() != null) {
-            pedido.setProducto(changes.getProducto());
-        }
-        if (changes.getCantidad() != null) {
-            pedido.setCantidad(changes.getCantidad());
-        }
-        if (changes.getTotal() != null) {
-            pedido.setTotal(changes.getTotal());
-        }
-        if (changes.getEstado() != null) {
-            validarEstado(changes.getEstado());
-            pedido.setEstado(changes.getEstado());
-        }
-        if (changes.getRepartidor() != null) {
-            pedido.setRepartidor(changes.getRepartidor().isBlank() ? null : changes.getRepartidor());
-        }
         if (changes.getPago() != null) {
-            pedido.setPago(changes.getPago());
+            pedido.setPago(normalizarPago(changes.getPago()));
         }
         if (changes.getFecha() != null) {
             pedido.setFecha(changes.getFecha());
         }
+
+        String nuevoRepartidor = pedido.getRepartidor();
+        if (changes.getRepartidor() != null) {
+            nuevoRepartidor = changes.getRepartidor().isBlank() ? null : changes.getRepartidor();
+            if (nuevoRepartidor != null) {
+                validarRepartidor(nuevoRepartidor);
+            }
+        }
+
+        String nuevoEstado = changes.getEstado() == null ? pedido.getEstado() : changes.getEstado();
+        if (changes.getEstado() != null) {
+            validarEstado(nuevoEstado);
+            validarTransicion(pedido.getEstado(), nuevoEstado);
+        }
+        if ("asignado".equals(nuevoEstado) && nuevoRepartidor == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Debes asignar un repartidor.");
+        }
+        if (nuevoRepartidor != null && "recibido".equals(nuevoEstado)) {
+            nuevoEstado = "asignado";
+        }
+
+        pedido.setRepartidor(nuevoRepartidor);
+        pedido.setEstado(nuevoEstado);
         return pedidoRepository.save(pedido);
     }
 
@@ -144,15 +187,25 @@ public class PedidoService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permisos para cambiar el estado.");
         }
         validarEstado(estado);
+        validarTransicion(pedido.getEstado(), estado);
+        if ("asignado".equals(estado) && pedido.getRepartidor() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Debes asignar un repartidor.");
+        }
         pedido.setEstado(estado);
         return pedidoRepository.save(pedido);
     }
 
+    @Transactional
     public void eliminar(String id) {
-        if (!pedidoRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Pedido no encontrado.");
+        Pedido pedido = find(id);
+        if (!"entregado".equals(pedido.getEstado())) {
+            productoRepository.findById(pedido.getProductoId()).ifPresent(producto -> {
+                int stock = producto.getStock() == null ? 0 : producto.getStock();
+                producto.setStock(stock + pedido.getCantidad());
+                productoRepository.save(producto);
+            });
         }
-        pedidoRepository.deleteById(id);
+        pedidoRepository.delete(pedido);
     }
 
     private Pedido find(String id) {
@@ -180,6 +233,34 @@ public class PedidoService {
         if (estado == null || !ESTADOS.contains(estado)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Estado inválido.");
         }
+    }
+
+    private void validarTransicion(String actual, String nuevo) {
+        if (actual.equals(nuevo)) {
+            return;
+        }
+        if (!TRANSICIONES.getOrDefault(actual, Set.of()).contains(nuevo)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Transición de estado inválida.");
+        }
+    }
+
+    private void validarRepartidor(String nombre) {
+        Usuario repartidor = usuarioRepository.findByNombreIgnoreCase(nombre)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Repartidor no encontrado."));
+        if (!"Repartidor".equals(repartidor.getRol()) || !"activo".equalsIgnoreCase(repartidor.getEstado())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El repartidor no está disponible.");
+        }
+    }
+
+    private String normalizarPago(String pago) {
+        if (pago == null || pago.isBlank()) {
+            return "efectivo";
+        }
+        String value = pago.trim().toLowerCase(Locale.ROOT);
+        if (!PAGOS.contains(value)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Forma de pago inválida.");
+        }
+        return value;
     }
 
     private void require(String value, String message) {

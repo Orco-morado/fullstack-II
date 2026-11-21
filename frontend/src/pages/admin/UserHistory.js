@@ -1,13 +1,21 @@
 import React from 'react';
-import { Container, Card, Table, Badge, Button, Alert, Row, Col } from 'react-bootstrap';
+import { Container, Card, Table, Badge, Button, Alert, Row, Col, Spinner } from 'react-bootstrap';
 import { useParams, Link } from 'react-router-dom';
 import { useData } from '../../context/DataContext';
 
 export default function UserHistory() {
   const { id } = useParams();
-  const { usuarios, pedidos } = useData();
+  const { usuarios, pedidos, loading } = useData();
 
   const usuario = usuarios.find((u) => u.id === id);
+
+  if (loading) {
+    return (
+      <Container className="my-5 text-center">
+        <Spinner animation="border" variant="warning" />
+      </Container>
+    );
+  }
 
   if (!usuario) {
     return (

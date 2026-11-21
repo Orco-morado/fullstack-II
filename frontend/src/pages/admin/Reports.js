@@ -26,16 +26,22 @@ export default function Reports() {
     .filter((p) => p.estado !== 'entregado' && p.estado !== 'anulado')
     .reduce((acc, p) => acc + p.total, 0);
 
-  const porEstado = ['pendiente', 'asignado', 'camino', 'entregado'].map((estado) => ({
+  const porEstado = ['recibido', 'asignado', 'camino', 'entregado'].map((estado) => ({
     estado,
     cantidad: pedidos.filter((p) => p.estado === estado).length,
   }));
+
+  const productosPorId = productos.reduce((acc, p) => {
+    acc[p.id] = p;
+    return acc;
+  }, {});
 
   const ventasPorCategoria = Object.entries(
     pedidos
       .filter((p) => p.estado === 'entregado')
       .reduce((acc, p) => {
-        acc[p.categoria || 'General'] = (acc[p.categoria || 'General'] || 0) + p.total;
+        const categoria = productosPorId[p.productoId]?.categoria || 'General';
+        acc[categoria] = (acc[categoria] || 0) + p.total;
         return acc;
       }, {})
   ).sort((a, b) => b[1] - a[1]);

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { authenticate as dbAuthenticate, updateUser as dbUpdateUser } from '../data/db';
-import { USE_LOCAL, api, getToken, setToken, clearToken } from '../api';
+import { USE_LOCAL, api, getToken, setToken, clearToken, TOKEN_KEY } from '../api';
 
 const SESSION_KEY = 'gasLaChispaSession';
 const AuthContext = createContext(null);
@@ -32,30 +32,40 @@ function persistSession(session, remember) {
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => readSession());
+  const [initializing, setInitializing] = useState(!USE_LOCAL);
 
   useEffect(() => {
-    if (USE_LOCAL) return;
+    if (USE_LOCAL) {
+      setInitializing(false);
+      return;
+    }
 
     if (!getToken()) {
       if (readSession()) {
         clearSession();
         setUser(null);
       }
+      setInitializing(false);
       return;
     }
 
     let active = true;
-    api.get('/auth/me')
-      .then((actual) => {
+    const remember = !!localStorage.getItem(TOKEN_KEY);
+    api.post('/auth/refresh')
+      .then((res) => {
         if (!active) return;
-        setUser(actual);
-        persistSession(actual);
+        setToken(res.token, remember);
+        setUser(res.usuario);
+        persistSession(res.usuario, remember);
       })
       .catch(() => {
         if (!active) return;
         clearToken();
         clearSession();
         setUser(null);
+      })
+      .finally(() => {
+        if (active) setInitializing(false);
       });
 
     return () => {
@@ -81,6 +91,7 @@ export function AuthProvider({ children }) {
         setToken(res.token, remember);
         setUser(session);
         persistSession(session, remember);
+        setInitializing(false);
         return { ok: true, user: session };
       })
       .catch((err) => ({ ok: false, error: err.message }));
@@ -88,9 +99,16 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(() => {
     setUser(null);
+    setInitializing(false);
     clearSession();
     clearToken();
   }, []);
+
+  useEffect(() => {
+    const onExpired = () => logout();
+    window.addEventListener('auth:expired', onExpired);
+    return () => window.removeEventListener('auth:expired', onExpired);
+  }, [logout]);
 
   const updateUser = useCallback(
     (changes) => {
@@ -161,6 +179,7 @@ export function AuthProvider({ children }) {
 
   const value = {
     user,
+    initializing,
     isAuthenticated: !!user,
     isAdmin: user?.rol === 'Administrador',
     isOperadora: user?.rol === 'Operadora',
