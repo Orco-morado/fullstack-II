@@ -116,11 +116,11 @@ describe('Usuarios admin - listas y filtros', () => {
   it('operadora no ve edición ni desactivación sobre administradores', () => {
     renderWithProviders(<Rutas />, { route: '/admin/usuarios', session: OPERADORA });
 
-    const filaAdmin = screen.getByText('Ana García').closest('tr');
+    const filaAdmin = screen.getByRole('row', { name: /Ana García/ });
     expect(within(filaAdmin).queryByTitle('Editar')).toBeNull();
     expect(within(filaAdmin).queryByTitle('Desactivar')).toBeNull();
 
-    const filaOperadora = screen.getByText('María López').closest('tr');
+    const filaOperadora = screen.getByRole('row', { name: /María López/ });
     expect(within(filaOperadora).getByTitle('Editar')).toBeTruthy();
     expect(within(filaOperadora).getByTitle('Desactivar')).toBeTruthy();
   });

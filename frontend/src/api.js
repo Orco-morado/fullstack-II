@@ -1,6 +1,10 @@
-export const API_BASE =
-  (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_URL) ||
-  'http://localhost:8081/api/v1';
+let envApiUrl;
+try {
+  envApiUrl = process.env.REACT_APP_API_URL;
+} catch {
+  envApiUrl = undefined;
+}
+export const API_BASE = envApiUrl || 'http://localhost:8081/api/v1';
 export const TOKEN_KEY = 'gasLaChispaToken';
 export const USE_LOCAL =
   (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'test') ||
