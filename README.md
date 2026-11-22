@@ -224,7 +224,7 @@ La referencia completa, con esquemas de entrada y salida, está en Swagger UI.
 4. Al recargar la aplicación, el frontend llama a `POST /auth/refresh` para renovar el token y recuperar la sesión.
 5. Si una solicitud autenticada responde `401`, el frontend limpia la sesión y redirige al login.
 
-El token expira a las 8 horas. La renovación es explícita y requiere un token vigente; no se persiste un refresh token separado. Los usuarios con estado `inactivo` no pueden iniciar sesión ni renovar el token: el backend responde `401`.
+El token expira a las 8 horas. La renovación es explícita y requiere un token vigente; no se persiste un refresh token separado. Los usuarios con estado `inactivo` no pueden iniciar sesión (`403`) ni renovar el token (`401`).
 
 ## Pruebas
 
