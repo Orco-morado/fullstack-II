@@ -40,6 +40,9 @@ public class AuthService {
 
     public LoginResponse refresh(Authentication authentication) {
         Usuario usuario = me(authentication);
+        if (!"activo".equalsIgnoreCase(usuario.getEstado())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "El usuario no esta activo.");
+        }
         return new LoginResponse(jwtService.generateToken(usuario), usuario);
     }
 

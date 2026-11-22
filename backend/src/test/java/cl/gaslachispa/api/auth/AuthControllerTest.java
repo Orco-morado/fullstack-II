@@ -73,6 +73,27 @@ class AuthControllerTest extends ApiTestSupport {
     }
 
     @Test
+    void usuarioDesactivadoNoPuedeUsarSuToken() throws Exception {
+        String token = token("cliente@gmail.com", "cliente123");
+        String admin = token("admin@gmail.com", "admin123");
+        String body = objectMapper.writeValueAsString(Map.of("estado", "inactivo"));
+
+        mockMvc.perform(put("/api/v1/usuarios/U-004")
+                        .header("Authorization", bearer(admin))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/v1/auth/me")
+                        .header("Authorization", bearer(token)))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .header("Authorization", bearer(token)))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void vendedorNoPuedeActualizarSuPerfil() throws Exception {
         String token = token("vendedor@gmail.com", "vendedor1");
         String body = objectMapper.writeValueAsString(Map.of("nombre", "Valentina Modificada"));
