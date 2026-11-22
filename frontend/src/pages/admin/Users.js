@@ -99,7 +99,7 @@ export default function Users() {
                                 variant="outline-primary"
                                 title="Editar"
                               >
-                                ✏️
+                                Editar
                               </Button>
                             )}
                             <Button
@@ -108,7 +108,7 @@ export default function Users() {
                               variant="outline-secondary"
                               title="Historial"
                             >
-                              📜
+                              Historial
                             </Button>
                             {gestionable && (
                               <Button
@@ -116,7 +116,7 @@ export default function Users() {
                                 onClick={() => toggleEstado(u)}
                                 title={u.estado === 'activo' ? 'Desactivar' : 'Activar'}
                               >
-                                {u.estado === 'activo' ? '🚫' : '✅'}
+                                {u.estado === 'activo' ? 'Desactivar' : 'Activar'}
                               </Button>
                             )}
                           </div>
