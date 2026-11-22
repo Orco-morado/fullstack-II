@@ -283,13 +283,6 @@ Advertencia: `down -v` elimina el volumen y todos los datos guardados.
 - **El frontend no conecta:** confirmar que el backend responde en `http://localhost:8081/api/v1/health` y que `REACT_APP_API_URL` apunta a esa base.
 - **Error de CORS:** el backend permite `http://localhost:3000` por defecto; si el frontend usa otro puerto, ajustar `app.cors.allowed-origins`.
 - **Login fallido:** verificar que la base tenga los usuarios seed y que el backend haya arrancado sin errores.
-
-## Documentación
-
-- `documentos/ERS_V2_Planilla_de_Requerimientos_GasLaChispa.xlsx`: planilla de requerimientos.
-- `documentos/Cobertura_de_Testing.md`: cobertura y criterios de pruebas.
-- `vistas-estaticas/`: prototipo original de la EP1, conservado como referencia.
-
 ## Notas
 
 - Proyecto académico de DSY1104.
