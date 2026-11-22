@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Container, Table, Button, Badge, Form, Card, Tab, Tabs, Row } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { useData } from '../../context/DataContext';
+import { useAuth } from '../../context/AuthContext';
 
 const ROLES = {
   Administrador: 'danger',
@@ -13,6 +14,7 @@ const ROLES = {
 
 export default function Users() {
   const { usuarios, pedidos, actualizarUsuario } = useData();
+  const { isAdmin } = useAuth();
   const [busqueda, setBusqueda] = useState('');
   const [filtroRol, setFiltroRol] = useState('');
 
@@ -75,39 +77,53 @@ export default function Users() {
                   {filtrados.length === 0 && (
                     <tr><td colSpan={6} className="text-center text-muted">No se encontraron usuarios</td></tr>
                   )}
-                  {filtrados.map((u) => (
-                    <tr key={u.id}>
-                      <td><strong>{u.nombre}</strong></td>
-                      <td>{u.run}</td>
-                      <td>{u.email}</td>
-                      <td><Badge bg={ROLES[u.rol]}>{u.rol}</Badge></td>
-                      <td>
-                        <Badge bg={u.estado === 'activo' ? 'success' : 'secondary'}>
-                          {u.estado === 'activo' ? 'Activo' : 'Inactivo'}
-                        </Badge>
-                      </td>
-                      <td>
-                        <div className="btn-group btn-group-sm">
-                          <Button as={Link} to={`/admin/usuarios/${u.id}/editar`} variant="outline-primary">✏️</Button>
-                          <Button
-                            as={Link}
-                            to={`/admin/usuarios/${u.id}/historial`}
-                            variant="outline-secondary"
-                            title="Historial"
-                          >
-                            📜
-                          </Button>
-                          <Button
-                            variant={u.estado === 'activo' ? 'outline-danger' : 'outline-success'}
-                            onClick={() => toggleEstado(u)}
-                            title={u.estado === 'activo' ? 'Desactivar' : 'Activar'}
-                          >
-                            {u.estado === 'activo' ? '🚫' : '✅'}
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                  {filtrados.map((u) => {
+                    const gestionable = isAdmin || u.rol !== 'Administrador';
+                    return (
+                      <tr key={u.id}>
+                        <td><strong>{u.nombre}</strong></td>
+                        <td>{u.run}</td>
+                        <td>{u.email}</td>
+                        <td><Badge bg={ROLES[u.rol]}>{u.rol}</Badge></td>
+                        <td>
+                          <Badge bg={u.estado === 'activo' ? 'success' : 'secondary'}>
+                            {u.estado === 'activo' ? 'Activo' : 'Inactivo'}
+                          </Badge>
+                        </td>
+                        <td>
+                          <div className="btn-group btn-group-sm">
+                            {gestionable && (
+                              <Button
+                                as={Link}
+                                to={`/admin/usuarios/${u.id}/editar`}
+                                variant="outline-primary"
+                                title="Editar"
+                              >
+                                ✏️
+                              </Button>
+                            )}
+                            <Button
+                              as={Link}
+                              to={`/admin/usuarios/${u.id}/historial`}
+                              variant="outline-secondary"
+                              title="Historial"
+                            >
+                              📜
+                            </Button>
+                            {gestionable && (
+                              <Button
+                                variant={u.estado === 'activo' ? 'outline-danger' : 'outline-success'}
+                                onClick={() => toggleEstado(u)}
+                                title={u.estado === 'activo' ? 'Desactivar' : 'Activar'}
+                              >
+                                {u.estado === 'activo' ? '🚫' : '✅'}
+                              </Button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </Table>
             </Card.Body>

@@ -2,11 +2,15 @@ import React, { useState } from 'react';
 import { Container, Card, Form, Button, Row, Col, Alert } from 'react-bootstrap';
 import { useNavigate, Link } from 'react-router-dom';
 import { useData } from '../../context/DataContext';
+import { useAuth } from '../../context/AuthContext';
 
+const ROLES = ['Administrador', 'Operadora', 'Vendedor', 'Repartidor', 'Cliente'];
 const vacio = { run: '', nombre: '', email: '', password: '', telefono: '', rol: 'Cliente', comuna: 'Chillan', direccion: '' };
 
 export default function UserNew() {
   const { crearUsuario } = useData();
+  const { isAdmin } = useAuth();
+  const rolesDisponibles = isAdmin ? ROLES : ROLES.filter((r) => r !== 'Administrador');
   const navigate = useNavigate();
   const [f, setF] = useState(vacio);
   const [errores, setErrores] = useState({});
@@ -83,7 +87,7 @@ export default function UserNew() {
               <Col md={4}>
                 <Form.Label>Rol *</Form.Label>
                 <Form.Select value={f.rol} onChange={set('rol')}>
-                  {['Administrador', 'Operadora', 'Vendedor', 'Repartidor', 'Cliente'].map((r) => (
+                  {rolesDisponibles.map((r) => (
                     <option key={r} value={r}>{r}</option>
                   ))}
                 </Form.Select>

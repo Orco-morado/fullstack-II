@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import org.springframework.transaction.annotation.Transactional;
 
 import cl.gaslachispa.api.support.ApiTestSupport;
 
@@ -16,16 +17,21 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Transactional
 class UsuariosControllerTest extends ApiTestSupport {
 
     private String crearUsuario(String token, String email, String run) throws Exception {
+        return crearUsuario(token, email, run, "Vendedor");
+    }
+
+    private String crearUsuario(String token, String email, String run, String rol) throws Exception {
         String body = objectMapper.writeValueAsString(Map.of(
                 "run", run,
                 "nombre", "Usuario de Prueba",
                 "email", email,
                 "password", "prueba123",
                 "telefono", "+56 9 1234 5678",
-                "rol", "Vendedor",
+                "rol", rol,
                 "estado", "activo"));
 
         String json = mockMvc.perform(post("/api/v1/usuarios")
@@ -173,5 +179,102 @@ class UsuariosControllerTest extends ApiTestSupport {
         mockMvc.perform(get("/api/v1/usuarios/" + id)
                         .header("Authorization", bearer(token)))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void operadoraPuedeCrearVendedor() throws Exception {
+        String token = token("operadora@gmail.com", "oper1234");
+        String body = objectMapper.writeValueAsString(Map.of(
+                "run", "90.000.001-1",
+                "nombre", "Vendedor de Operadora",
+                "email", "vendedor.operadora@test.cl",
+                "password", "vendedor9",
+                "rol", "Vendedor"));
+
+        mockMvc.perform(post("/api/v1/usuarios")
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.rol").value("Vendedor"));
+    }
+
+    @Test
+    void operadoraNoPuedeCrearAdministrador() throws Exception {
+        String token = token("operadora@gmail.com", "oper1234");
+        String body = objectMapper.writeValueAsString(Map.of(
+                "run", "90.000.002-2",
+                "nombre", "Administrador de Operadora",
+                "email", "admin.operadora@test.cl",
+                "password", "admin9999",
+                "rol", "Administrador"));
+
+        mockMvc.perform(post("/api/v1/usuarios")
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void operadoraNoPuedeEditarAdministrador() throws Exception {
+        String adminToken = token("admin@gmail.com", "admin123");
+        String id = crearUsuario(adminToken, "admin.editar@test.cl", "90.000.003-3", "Administrador");
+        String token = token("operadora@gmail.com", "oper1234");
+
+        mockMvc.perform(put("/api/v1/usuarios/" + id)
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("nombre", "Editado"))))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void operadoraNoPuedePromoverUsuarioAAdministrador() throws Exception {
+        String adminToken = token("admin@gmail.com", "admin123");
+        String id = crearUsuario(adminToken, "vendedor.promover@test.cl", "90.000.004-4");
+        String token = token("operadora@gmail.com", "oper1234");
+
+        mockMvc.perform(put("/api/v1/usuarios/" + id)
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("rol", "Administrador"))))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void operadoraNoPuedeEliminarAdministrador() throws Exception {
+        String adminToken = token("admin@gmail.com", "admin123");
+        String id = crearUsuario(adminToken, "admin.eliminar@test.cl", "90.000.005-5", "Administrador");
+        String token = token("operadora@gmail.com", "oper1234");
+
+        mockMvc.perform(delete("/api/v1/usuarios/" + id)
+                        .header("Authorization", bearer(token)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void operadoraPuedeEditarVendedor() throws Exception {
+        String adminToken = token("admin@gmail.com", "admin123");
+        String id = crearUsuario(adminToken, "vendedor.editar@test.cl", "90.000.006-6");
+        String token = token("operadora@gmail.com", "oper1234");
+
+        mockMvc.perform(put("/api/v1/usuarios/" + id)
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("nombre", "Vendedor Editado"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nombre").value("Vendedor Editado"));
+    }
+
+    @Test
+    void operadoraPuedeEliminarVendedor() throws Exception {
+        String adminToken = token("admin@gmail.com", "admin123");
+        String id = crearUsuario(adminToken, "vendedor.eliminar@test.cl", "90.000.007-7");
+        String token = token("operadora@gmail.com", "oper1234");
+
+        mockMvc.perform(delete("/api/v1/usuarios/" + id)
+                        .header("Authorization", bearer(token)))
+                .andExpect(status().isNoContent());
     }
 }

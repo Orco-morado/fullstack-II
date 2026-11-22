@@ -1,6 +1,6 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import { screen, fireEvent } from '@testing-library/react';
+import { screen, fireEvent, within } from '@testing-library/react';
 import Dashboard from '../pages/admin/Dashboard';
 import ProductsAdmin from '../pages/admin/Products';
 import Users from '../pages/admin/Users';
@@ -11,6 +11,14 @@ const ADMIN = {
   nombre: 'Ana García',
   email: 'admin@gmail.com',
   rol: 'Administrador',
+  estado: 'activo',
+};
+
+const OPERADORA = {
+  id: 'U-002',
+  nombre: 'María López',
+  email: 'operadora@gmail.com',
+  rol: 'Operadora',
   estado: 'activo',
 };
 
@@ -103,6 +111,18 @@ describe('Usuarios admin - listas y filtros', () => {
     expect(screen.getAllByText('Ana García').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Pedro Muñoz').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Lucía Herrera').length).toBeGreaterThan(0);
+  });
+
+  it('operadora no ve edición ni desactivación sobre administradores', () => {
+    renderWithProviders(<Rutas />, { route: '/admin/usuarios', session: OPERADORA });
+
+    const filaAdmin = screen.getByText('Ana García').closest('tr');
+    expect(within(filaAdmin).queryByTitle('Editar')).toBeNull();
+    expect(within(filaAdmin).queryByTitle('Desactivar')).toBeNull();
+
+    const filaOperadora = screen.getByText('María López').closest('tr');
+    expect(within(filaOperadora).getByTitle('Editar')).toBeTruthy();
+    expect(within(filaOperadora).getByTitle('Desactivar')).toBeTruthy();
   });
 
   it('filtra usuarios por búsqueda', () => {

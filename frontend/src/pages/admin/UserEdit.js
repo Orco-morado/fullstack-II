@@ -2,13 +2,20 @@ import React, { useEffect, useState } from 'react';
 import { Container, Card, Form, Button, Row, Col, Alert } from 'react-bootstrap';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useData } from '../../context/DataContext';
+import { useAuth } from '../../context/AuthContext';
+
+const ROLES = ['Administrador', 'Operadora', 'Vendedor', 'Repartidor', 'Cliente'];
 
 export default function UserEdit() {
   const { id } = useParams();
   const { usuarios, actualizarUsuario } = useData();
+  const { isAdmin } = useAuth();
   const navigate = useNavigate();
 
   const original = usuarios.find((u) => u.id === id);
+  const esAdminObjetivo = original?.rol === 'Administrador';
+  const bloqueado = !isAdmin && esAdminObjetivo;
+  const rolesDisponibles = isAdmin ? ROLES : ROLES.filter((r) => r !== 'Administrador');
   const [f, setF] = useState(null);
   const [errores, setErrores] = useState({});
   const [errorServidor, setErrorServidor] = useState('');
@@ -27,6 +34,19 @@ export default function UserEdit() {
       });
     }
   }, [original, f]);
+
+  if (bloqueado) {
+    return (
+      <Container className="my-5">
+        <Alert variant="danger">
+          Solo un Administrador puede editar a otro Administrador.
+          <div className="mt-2">
+            <Button as={Link} to="/admin/usuarios" variant="dark">Volver</Button>
+          </div>
+        </Alert>
+      </Container>
+    );
+  }
 
   if (!original || !f) {
     return (
@@ -110,7 +130,7 @@ export default function UserEdit() {
               <Col md={4}>
                 <Form.Label>Rol</Form.Label>
                 <Form.Select value={f.rol} onChange={set('rol')}>
-                  {['Administrador', 'Operadora', 'Vendedor', 'Repartidor', 'Cliente'].map((r) => (
+                  {rolesDisponibles.map((r) => (
                     <option key={r} value={r}>{r}</option>
                   ))}
                 </Form.Select>

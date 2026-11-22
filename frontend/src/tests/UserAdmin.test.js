@@ -13,6 +13,14 @@ const ADMIN = {
   estado: 'activo',
 };
 
+const OPERADORA = {
+  id: 'U-002',
+  nombre: 'María López',
+  email: 'operadora@gmail.com',
+  rol: 'Operadora',
+  estado: 'activo',
+};
+
 function RutasUsuario() {
   return (
     <Routes>
@@ -138,6 +146,16 @@ describe('UserNew - CRUD Create usuario', () => {
     expect(rolSelect.value).toBe('Repartidor');
   })
 
+  it('operadora no ve la opción Administrador al crear un usuario', () => {
+    renderWithProviders(<RutasUsuario />, { route: '/admin/usuarios/nuevo', session: OPERADORA });
+
+    const opciones = Array.from(getSelects()[0].options).map((o) => o.value);
+    expect(opciones).not.toContain('Administrador');
+    expect(opciones).toContain('Vendedor');
+    expect(opciones).toContain('Repartidor');
+    expect(opciones).toContain('Cliente');
+  });
+
   it('limpia errores al corregir campos', () => {
     renderWithProviders(<RutasUsuario />, { route: '/admin/usuarios/nuevo', session: ADMIN });
 
@@ -173,6 +191,20 @@ describe('UserEdit - CRUD Update usuario', () => {
     expect(getSelects()[0].value).toBe('Operadora');
     expect(getSelects()[1].value).toBe('activo');
   })
+
+  it('operadora no puede abrir la edición de un administrador', () => {
+    renderWithProviders(<RutasUsuario />, { route: '/admin/usuarios/U-001/editar', session: OPERADORA });
+
+    expect(screen.getByText(/Solo un Administrador puede editar/)).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: /Editar usuario/ })).toBeNull();
+  });
+
+  it('operadora no ve la opción Administrador al editar un vendedor', () => {
+    renderWithProviders(<RutasUsuario />, { route: '/admin/usuarios/U-003/editar', session: OPERADORA });
+
+    const opciones = Array.from(getSelects()[0].options).map((o) => o.value);
+    expect(opciones).not.toContain('Administrador');
+  });
 
   it('permite editar nombre, email y teléfono', () => {
     renderWithProviders(<RutasUsuario />, { route: '/admin/usuarios/U-002/editar', session: ADMIN });
