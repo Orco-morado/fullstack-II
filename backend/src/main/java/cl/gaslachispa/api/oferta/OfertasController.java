@@ -17,10 +17,15 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping("/api/v1/ofertas")
+@Tag(name = "Ofertas", description = "Catálogo y administración de ofertas")
 public class OfertasController {
 
     private final OfertaRepository ofertaRepository;
@@ -30,6 +35,10 @@ public class OfertasController {
     }
 
     @GetMapping
+    @Operation(summary = "Listar ofertas", description = "Devuelve las ofertas, con filtro opcional por estado activo.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista de ofertas")
+    })
     public List<Oferta> listar(@RequestParam(required = false) Boolean activo) {
         List<Oferta> ofertas = ofertaRepository.findAll();
         if (activo == null) {
@@ -39,6 +48,11 @@ public class OfertasController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Obtener oferta", description = "Devuelve una oferta por su identificador.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Oferta encontrada"),
+            @ApiResponse(responseCode = "404", description = "Oferta no encontrada")
+    })
     public Oferta obtener(@PathVariable String id) {
         return ofertaRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Oferta no encontrada."));
@@ -48,6 +62,14 @@ public class OfertasController {
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('Administrador', 'Operadora')")
     @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Crear oferta", description = "Crea una oferta. Requiere rol Administrador u Operadora.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Oferta creada"),
+            @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos"),
+            @ApiResponse(responseCode = "401", description = "No autenticado"),
+            @ApiResponse(responseCode = "403", description = "Usuario sin permiso"),
+            @ApiResponse(responseCode = "409", description = "Oferta ya existente")
+    })
     public Oferta crear(@RequestBody Oferta oferta) {
         if (oferta.getTitulo() == null || oferta.getTitulo().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El título de la oferta es requerido.");
@@ -70,6 +92,13 @@ public class OfertasController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('Administrador', 'Operadora')")
     @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Actualizar oferta", description = "Actualiza una oferta. Requiere rol Administrador u Operadora.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Oferta actualizada"),
+            @ApiResponse(responseCode = "401", description = "No autenticado"),
+            @ApiResponse(responseCode = "403", description = "Usuario sin permiso"),
+            @ApiResponse(responseCode = "404", description = "Oferta no encontrada")
+    })
     public Oferta actualizar(@PathVariable String id, @RequestBody Oferta changes) {
         Oferta oferta = obtener(id);
         if (changes.getTitulo() != null) {
@@ -100,6 +129,13 @@ public class OfertasController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAnyRole('Administrador', 'Operadora')")
     @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Eliminar oferta", description = "Elimina una oferta. Requiere rol Administrador u Operadora.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Oferta eliminada"),
+            @ApiResponse(responseCode = "401", description = "No autenticado"),
+            @ApiResponse(responseCode = "403", description = "Usuario sin permiso"),
+            @ApiResponse(responseCode = "404", description = "Oferta no encontrada")
+    })
     public void eliminar(@PathVariable String id) {
         if (!ofertaRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Oferta no encontrada.");

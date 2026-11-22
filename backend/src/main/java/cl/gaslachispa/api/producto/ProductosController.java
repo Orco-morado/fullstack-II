@@ -17,10 +17,15 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping("/api/v1/productos")
+@Tag(name = "Productos", description = "Catálogo y administración de productos")
 public class ProductosController {
 
     private final ProductoRepository productoRepository;
@@ -32,6 +37,10 @@ public class ProductosController {
     }
 
     @GetMapping
+    @Operation(summary = "Listar productos", description = "Devuelve el catálogo, con filtros opcionales por categoría o texto.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista de productos")
+    })
     public List<Producto> listar(@RequestParam(required = false) String categoria,
             @RequestParam(required = false) String buscar) {
         List<Producto> productos = categoria != null && !categoria.isBlank()
@@ -49,6 +58,11 @@ public class ProductosController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Obtener producto", description = "Devuelve un producto por su identificador.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Producto encontrado"),
+            @ApiResponse(responseCode = "404", description = "Producto no encontrado")
+    })
     public Producto obtener(@PathVariable String id) {
         return decorar(productoRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado.")));
@@ -58,6 +72,14 @@ public class ProductosController {
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('Administrador', 'Operadora')")
     @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Crear producto", description = "Crea un producto. Requiere rol Administrador u Operadora.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Producto creado"),
+            @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos"),
+            @ApiResponse(responseCode = "401", description = "No autenticado"),
+            @ApiResponse(responseCode = "403", description = "Usuario sin permiso"),
+            @ApiResponse(responseCode = "409", description = "Producto ya existente")
+    })
     public Producto crear(@RequestBody Producto producto) {
         if (producto.getNombre() == null || producto.getNombre().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El nombre del producto es requerido.");
@@ -86,6 +108,14 @@ public class ProductosController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('Administrador', 'Operadora')")
     @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Actualizar producto", description = "Actualiza un producto. Requiere rol Administrador u Operadora.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Producto actualizado"),
+            @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos"),
+            @ApiResponse(responseCode = "401", description = "No autenticado"),
+            @ApiResponse(responseCode = "403", description = "Usuario sin permiso"),
+            @ApiResponse(responseCode = "404", description = "Producto no encontrado")
+    })
     public Producto actualizar(@PathVariable String id, @RequestBody Producto changes) {
         Producto producto = obtener(id);
         if (changes.getNombre() != null) {
@@ -119,6 +149,13 @@ public class ProductosController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAnyRole('Administrador', 'Operadora')")
     @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Eliminar producto", description = "Elimina un producto. Requiere rol Administrador u Operadora.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Producto eliminado"),
+            @ApiResponse(responseCode = "401", description = "No autenticado"),
+            @ApiResponse(responseCode = "403", description = "Usuario sin permiso"),
+            @ApiResponse(responseCode = "404", description = "Producto no encontrado")
+    })
     public void eliminar(@PathVariable String id) {
         if (!productoRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado.");

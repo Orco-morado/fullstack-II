@@ -17,10 +17,15 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping("/api/v1/categorias")
+@Tag(name = "Categorías", description = "Catálogo y administración de categorías")
 public class CategoriasController {
 
     private final CategoriaRepository categoriaRepository;
@@ -30,6 +35,10 @@ public class CategoriasController {
     }
 
     @GetMapping
+    @Operation(summary = "Listar categorías", description = "Devuelve las categorías, con filtro opcional por estado activo.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista de categorías")
+    })
     public List<Categoria> listar(@RequestParam(required = false) Boolean activo) {
         List<Categoria> categorias = categoriaRepository.findAll();
         if (activo == null) {
@@ -39,6 +48,11 @@ public class CategoriasController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Obtener categoría", description = "Devuelve una categoría por su identificador.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Categoría encontrada"),
+            @ApiResponse(responseCode = "404", description = "Categoría no encontrada")
+    })
     public Categoria obtener(@PathVariable String id) {
         return categoriaRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Categoría no encontrada."));
@@ -48,6 +62,14 @@ public class CategoriasController {
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('Administrador', 'Operadora')")
     @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Crear categoría", description = "Crea una categoría. Requiere rol Administrador u Operadora.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Categoría creada"),
+            @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos"),
+            @ApiResponse(responseCode = "401", description = "No autenticado"),
+            @ApiResponse(responseCode = "403", description = "Usuario sin permiso"),
+            @ApiResponse(responseCode = "409", description = "Categoría ya existente")
+    })
     public Categoria crear(@RequestBody Categoria categoria) {
         if (categoria.getNombre() == null || categoria.getNombre().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El nombre de la categoría es requerido.");
@@ -67,6 +89,13 @@ public class CategoriasController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('Administrador', 'Operadora')")
     @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Actualizar categoría", description = "Actualiza una categoría. Requiere rol Administrador u Operadora.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Categoría actualizada"),
+            @ApiResponse(responseCode = "401", description = "No autenticado"),
+            @ApiResponse(responseCode = "403", description = "Usuario sin permiso"),
+            @ApiResponse(responseCode = "404", description = "Categoría no encontrada")
+    })
     public Categoria actualizar(@PathVariable String id, @RequestBody Categoria changes) {
         Categoria categoria = obtener(id);
         if (changes.getNombre() != null) {
@@ -85,6 +114,13 @@ public class CategoriasController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAnyRole('Administrador', 'Operadora')")
     @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Eliminar categoría", description = "Elimina una categoría. Requiere rol Administrador u Operadora.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Categoría eliminada"),
+            @ApiResponse(responseCode = "401", description = "No autenticado"),
+            @ApiResponse(responseCode = "403", description = "Usuario sin permiso"),
+            @ApiResponse(responseCode = "404", description = "Categoría no encontrada")
+    })
     public void eliminar(@PathVariable String id) {
         if (!categoriaRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Categoría no encontrada.");

@@ -18,10 +18,15 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping("/api/v1/blogs")
+@Tag(name = "Blogs", description = "Publicaciones y administración del blog")
 public class BlogsController {
 
     private final BlogRepository blogRepository;
@@ -31,6 +36,10 @@ public class BlogsController {
     }
 
     @GetMapping
+    @Operation(summary = "Listar publicaciones", description = "Devuelve las publicaciones, con filtro opcional por estado activo.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista de publicaciones")
+    })
     public List<Blog> listar(@RequestParam(required = false) Boolean activo) {
         List<Blog> blogs = blogRepository.findAll();
         if (activo == null) {
@@ -40,6 +49,11 @@ public class BlogsController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Obtener publicación", description = "Devuelve una publicación por su identificador.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Publicación encontrada"),
+            @ApiResponse(responseCode = "404", description = "Publicación no encontrada")
+    })
     public Blog obtener(@PathVariable String id) {
         return blogRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Publicación no encontrada."));
@@ -49,6 +63,14 @@ public class BlogsController {
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('Administrador', 'Operadora')")
     @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Crear publicación", description = "Crea una publicación. Requiere rol Administrador u Operadora.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Publicación creada"),
+            @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos"),
+            @ApiResponse(responseCode = "401", description = "No autenticado"),
+            @ApiResponse(responseCode = "403", description = "Usuario sin permiso"),
+            @ApiResponse(responseCode = "409", description = "Publicación ya existente")
+    })
     public Blog crear(@RequestBody Blog blog) {
         if (blog.getTitulo() == null || blog.getTitulo().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El título de la publicación es requerido.");
@@ -77,6 +99,13 @@ public class BlogsController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('Administrador', 'Operadora')")
     @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Actualizar publicación", description = "Actualiza una publicación. Requiere rol Administrador u Operadora.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Publicación actualizada"),
+            @ApiResponse(responseCode = "401", description = "No autenticado"),
+            @ApiResponse(responseCode = "403", description = "Usuario sin permiso"),
+            @ApiResponse(responseCode = "404", description = "Publicación no encontrada")
+    })
     public Blog actualizar(@PathVariable String id, @RequestBody Blog changes) {
         Blog blog = obtener(id);
         if (changes.getTitulo() != null) {
@@ -107,6 +136,13 @@ public class BlogsController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasAnyRole('Administrador', 'Operadora')")
     @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Eliminar publicación", description = "Elimina una publicación. Requiere rol Administrador u Operadora.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Publicación eliminada"),
+            @ApiResponse(responseCode = "401", description = "No autenticado"),
+            @ApiResponse(responseCode = "403", description = "Usuario sin permiso"),
+            @ApiResponse(responseCode = "404", description = "Publicación no encontrada")
+    })
     public void eliminar(@PathVariable String id) {
         if (!blogRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Publicación no encontrada.");
