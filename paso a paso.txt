@@ -1,5 +1,5 @@
 # ============================================================
-# ENTREGABLES PARCIAL 2 - GAS LA CHISPA
+# ENTREGABLES PARCIAL 3 - GAS LA CHISPA
 # Comandos paso a paso (ejecutar en PowerShell)
 # ============================================================
 
@@ -13,30 +13,36 @@ git status --short
 cd frontend
 npm run build
 cd ..
-Compress-Archive -Path frontend -DestinationPath "GasLaChispa_Frontend_EP2.zip" -Force
+Compress-Archive -Path frontend -DestinationPath "GasLaChispa_Frontend_EP3.zip" -Force
 
-# 4. VERIFICAR ZIP (debe ser ~0.3 MB, ~68 archivos, SIN node_modules/build)
+# 4. VERIFICAR ZIP (sin node_modules ni build)
 # En Explorer: click derecho -> Propiedades -> Tamaño
 
-# 5. VERIFICAR TESTS EN LOCAL (opcional, sanity check)
-cd frontend
-npm run test:jest      # Debe salir: 87 passed
-npm run test:jasmine   # Debe salir: TOTAL: 87 SUCCESS
+# 5. VERIFICAR TESTS EN LOCAL
+cd backend
+.\mvnw.cmd test          # Debe salir: 73 tests OK
+cd ..\frontend
+npm run test:jest        # Debe salir: 117 passed, 18 suites
+npm run test:jasmine     # Debe salir: TOTAL: 117 SUCCESS
+npm run test:coverage    # Cobertura: 58.05% statements, 60.52% lines
 npx eslint src --ext .js,.jsx   # Debe salir: 0 errors
 cd ..
 
-# 6. QUÉ ENTREGAR (4 archivos/links)
+# 6. QUÉ ENTREGAR
 # ------------------------------------------------------------
 # A) LINK GITHUB PÚBLICO:
 #    https://github.com/Orco-morado/fullstack-II
 
-# B) ZIP:
-#    C:\Users\vicen\Desktop\gas-la-chispa\GasLaChispa_Frontend_EP2.zip
+# B) ZIP FRONTEND:
+#    C:\Users\vicen\Desktop\gas-la-chispa\GasLaChispa_Frontend_EP3.zip
 
-# C) ERS V2:
-#    C:\Users\vicen\Desktop\gas-la-chispa\documentos\ERS_V2_Planilla_de_Requerimientos_GasLaChispa.xlsx
+# C) DOCUMENTO DE INTEGRACIÓN:
+#    C:\Users\vicen\Desktop\gas-la-chispa\documentos\Documento_de_Integracion.md
 
-# D) COBERTURA TESTING:
+# D) MANUAL DE USUARIO:
+#    C:\Users\vicen\Desktop\gas-la-chispa\documentos\Manual_de_Usuario.md
+
+# E) COBERTURA TESTING:
 #    C:\Users\vicen\Desktop\gas-la-chispa\documentos\Cobertura_de_Testing.md
 
 # 7. VERIFICACIÓN EN PC DESTINO (para probar que el ZIP sirve)
@@ -49,11 +55,15 @@ cd ..
 # npm run test:jasmine
 
 # ============================================================
-# PRESENTACIÓN INDIVIDUAL (60% nota) - ENSAYAR 15 MIN
+# PRESENTACIÓN INDIVIDUAL - ENSAYAR 15 MIN
 # ============================================================
-# 1. Arquitectura: React 19 + Router v6 + 3 Contexts (Auth/Cart/Data)
+# 1. Arquitectura: React 19 + Router v6 + Contexts (Auth/Cart/Data) + API Spring Boot + MySQL
 # 2. Demo: Compra completa -> Carrito -> Checkout -> Pago OK / Pago Error
-# 3. Demo: npm run test:jasmine (87 SUCCESS en vivo)
-# 4. Mocks: localStorage (db.js, sesión, carrito), MemoryRouter
-# 5. Cobertura: 55.6% global, formularios admin 94-100%
-# 6. Responsive: Bootstrap 5, breakpoints mobile/tablet/desktop
+# 3. Demo: oferta vigente aplicada al precio y total del pedido
+# 4. Demo: usuario inactivo no puede iniciar sesión ni renovar token (401)
+# 5. Demo: Operadora no puede crear, editar ni eliminar Administradores
+# 6. Swagger: http://localhost:8081/swagger-ui.html
+# 7. Demo: npm run test:jasmine (117 SUCCESS en vivo)
+# 8. Mocks: localStorage (db.js, sesión, carrito), MemoryRouter y fetch simulado
+# 9. Cobertura: 58.05% statements, 60.52% lines; formularios admin sobre 90%
+# 10. Responsive: Bootstrap 5, breakpoints mobile/tablet/desktop

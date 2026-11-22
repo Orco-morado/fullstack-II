@@ -149,7 +149,7 @@ REACT_APP_API_URL=http://localhost:8081/api/v1
 | Rol | Puede hacer |
 |---|---|
 | **Administrador** | Gestionar productos, categorías, ofertas, blogs, usuarios y pedidos; asignar repartidores; cambiar estados; ver reportes y perfil. |
-| **Operadora** | Mismas funciones operativas que el Administrador. |
+| **Operadora** | Mismas funciones operativas que el Administrador, excepto crear, editar o eliminar usuarios con rol Administrador. |
 | **Vendedor** | Consultar el catálogo y la lista/detalle de pedidos en modo solo lectura. No puede editar productos, crear pedidos, asignar repartidores ni acceder a Perfil. |
 | **Repartidor** | Ver únicamente sus pedidos asignados y avanzar el estado de `asignado` a `camino` y de `camino` a `entregado`. |
 | **Cliente** | Comprar en la tienda, pagar y registrarse. La interfaz actual no expone historial ni edición de perfil para este rol. |
@@ -172,6 +172,12 @@ Rutas principales:
 
 Estados permitidos: `recibido -> asignado -> camino -> entregado`. No se permiten saltos ni retrocesos.
 
+## Precios y ofertas
+
+El backend calcula el `precioFinal` de cada producto con la oferta activa y vigente de mayor descuento. Las ofertas vencidas o inactivas no modifican el precio. El total del pedido se calcula en el servidor con ese precio final, y el frontend muestra el precio original tachado cuando corresponde.
+
+La vigencia se compara por fecha local en `America/Santiago`; no se usa `new Date('YYYY-MM-DD')` para evitar desfases de zona horaria.
+
 ## API principal
 
 Base URL: `http://localhost:8081/api/v1`
@@ -187,7 +193,7 @@ Base URL: `http://localhost:8081/api/v1`
 | PUT | `/auth/password` | Administrador, Operadora, Cliente o Repartidor |
 | GET | `/productos`, `/categorias`, `/ofertas`, `/blogs` | Público |
 | POST/PUT/DELETE | `/productos`, `/categorias`, `/ofertas`, `/blogs` | Administrador u Operadora |
-| GET/POST/PUT/DELETE | `/usuarios` | Administrador u Operadora |
+| GET/POST/PUT/DELETE | `/usuarios` | Administrador u Operadora; la Operadora no puede gestionar Administradores |
 | GET | `/pedidos`, `/pedidos/{id}`, `/pedidos/estado/{estado}` | JWT; el resultado se filtra según el rol |
 | POST | `/pedidos` | Cliente, Administrador u Operadora |
 | PUT | `/pedidos/{id}` | Administrador u Operadora |
@@ -218,7 +224,7 @@ La referencia completa, con esquemas de entrada y salida, está en Swagger UI.
 4. Al recargar la aplicación, el frontend llama a `POST /auth/refresh` para renovar el token y recuperar la sesión.
 5. Si una solicitud autenticada responde `401`, el frontend limpia la sesión y redirige al login.
 
-El token expira a las 8 horas. La renovación es explícita y requiere un token vigente; no se persiste un refresh token separado.
+El token expira a las 8 horas. La renovación es explícita y requiere un token vigente; no se persiste un refresh token separado. Los usuarios con estado `inactivo` no pueden iniciar sesión ni renovar el token: el backend responde `401`.
 
 ## Pruebas
 
@@ -229,16 +235,17 @@ cd backend
 .\mvnw.cmd test
 ```
 
-Resultado de referencia: **59 pruebas OK**.
+Resultado de referencia: **73 pruebas OK**.
 
 Frontend:
 
 ```powershell
 cd frontend
 npm run test:jest
+npm run test:jasmine
 ```
 
-Resultado de referencia: **105 pruebas OK en 17 suites**.
+Resultado de referencia: **117 pruebas OK en 18 suites** en Jest y **117 SUCCESS** en Jasmine + Karma.
 
 Compilación de producción:
 
@@ -247,7 +254,7 @@ cd frontend
 npm run build
 ```
 
-Las pruebas del frontend usan el modo local de `src/data/db.js` para no depender de la API durante Jest. En desarrollo y producción el frontend consume la API real.
+Las pruebas del frontend usan el modo local de `src/data/db.js` para no depender de la API durante Jest y Karma. En desarrollo y producción el frontend consume la API real.
 
 ## Datos de demostración
 
