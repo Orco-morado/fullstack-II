@@ -1,17 +1,33 @@
 import { API_BASE, TOKEN_KEY, api, clearToken, getToken, request, setToken } from '../api';
 
-const originalFetch = global.fetch;
+const originalFetch = window.fetch;
+
+function crearFetchMock() {
+  const mock = (url, options) => {
+    mock.calls.push([url, options]);
+    return Promise.resolve(mock.respuesta);
+  };
+  mock.calls = [];
+  mock.respuesta = { ok: true, status: 200, text: async () => '' };
+  mock.mockResolvedValue = (respuesta) => {
+    mock.respuesta = respuesta;
+  };
+  return mock;
+}
 
 describe('api.js - cliente HTTP', () => {
+  let fetchMock;
+
   beforeEach(() => {
     localStorage.clear();
     sessionStorage.clear();
-    global.fetch = jest.fn();
+    fetchMock = crearFetchMock();
+    window.fetch = fetchMock;
   });
 
   afterAll(() => {
-    if (originalFetch) global.fetch = originalFetch;
-    else delete global.fetch;
+    if (originalFetch) window.fetch = originalFetch;
+    else delete window.fetch;
   });
 
   it('guarda el token en localStorage cuando remember es true', () => {
@@ -41,27 +57,24 @@ describe('api.js - cliente HTTP', () => {
 
   it('agrega el header Authorization cuando hay token', async () => {
     setToken('token-789', true);
-    global.fetch.mockResolvedValue({
+    fetchMock.mockResolvedValue({
       ok: true,
       status: 200,
       text: async () => JSON.stringify({ hola: 'mundo' }),
     });
 
     const data = await request('/productos');
+    const [url, options] = fetchMock.calls[0];
 
-    expect(global.fetch).toHaveBeenCalledWith(
-      `${API_BASE}/productos`,
-      expect.objectContaining({
-        method: 'GET',
-        headers: expect.objectContaining({ Authorization: 'Bearer token-789' }),
-      })
-    );
+    expect(url).toBe(`${API_BASE}/productos`);
+    expect(options.method).toBe('GET');
+    expect(options.headers.Authorization).toBe('Bearer token-789');
     expect(data).toEqual({ hola: 'mundo' });
   });
 
   it('no agrega Authorization cuando auth es false', async () => {
     setToken('token-789', true);
-    global.fetch.mockResolvedValue({
+    fetchMock.mockResolvedValue({
       ok: true,
       status: 200,
       text: async () => JSON.stringify({ token: 'nuevo' }),
@@ -69,46 +82,59 @@ describe('api.js - cliente HTTP', () => {
 
     await api.post('/auth/login', { email: 'a@b.cl', password: 'secreta' }, { auth: false });
 
-    const [, options] = global.fetch.mock.calls[0];
+    const [, options] = fetchMock.calls[0];
     expect(options.headers.Authorization).toBeUndefined();
     expect(options.body).toBe(JSON.stringify({ email: 'a@b.cl', password: 'secreta' }));
   });
 
   it('devuelve null en respuestas 204', async () => {
-    global.fetch.mockResolvedValue({ ok: true, status: 204, text: async () => '' });
+    fetchMock.mockResolvedValue({ ok: true, status: 204, text: async () => '' });
 
-    await expect(api.remove('/productos/VOL-005')).resolves.toBeNull();
+    const result = await api.remove('/productos/VOL-005');
+
+    expect(result).toBeNull();
   });
 
   it('lanza un error con status y mensaje del backend', async () => {
-    global.fetch.mockResolvedValue({
+    fetchMock.mockResolvedValue({
       ok: false,
       status: 409,
-      text: async () =>
-        JSON.stringify({ status: 409, error: 'Conflicto', message: 'El correo ya está registrado.' }),
+      text: async () => JSON.stringify({ status: 409, message: 'El correo ya esta registrado.' }),
     });
 
-    await expect(
-      request('/auth/registro', { method: 'POST', body: { email: 'a@b.cl' } })
-    ).rejects.toMatchObject({
-      status: 409,
-      message: 'El correo ya está registrado.',
-    });
+    let error;
+    try {
+      await request('/auth/registro', { method: 'POST', body: { email: 'a@b.cl' } });
+    } catch (err) {
+      error = err;
+    }
+
+    expect(error.status).toBe(409);
+    expect(error.message).toBe('El correo ya esta registrado.');
   });
 
-  it('emite auth:expired cuando una petición autenticada devuelve 401', async () => {
+  it('emite auth:expired cuando una peticion autenticada devuelve 401', async () => {
     setToken('token-401', true);
-    const handler = jest.fn();
+    let avisos = 0;
+    const handler = () => {
+      avisos += 1;
+    };
     window.addEventListener('auth:expired', handler);
-    global.fetch.mockResolvedValue({
+    fetchMock.mockResolvedValue({
       ok: false,
       status: 401,
       text: async () => JSON.stringify({ message: 'No autorizado' }),
     });
 
     try {
-      await expect(request('/pedidos')).rejects.toMatchObject({ status: 401 });
-      expect(handler).toHaveBeenCalled();
+      let error;
+      try {
+        await request('/pedidos');
+      } catch (err) {
+        error = err;
+      }
+      expect(error.status).toBe(401);
+      expect(avisos).toBe(1);
     } finally {
       window.removeEventListener('auth:expired', handler);
     }
