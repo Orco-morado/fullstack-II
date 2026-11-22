@@ -78,11 +78,15 @@ export default function Checkout() {
       })
     );
 
-    const finalizar = () => {
+    const finalizar = (pedidos) => {
+      const total = pedidos.reduce(
+        (acumulado, pedido) => acumulado + (Number(pedido?.total) || 0),
+        0
+      );
       clearCart();
       navigate('/pago-correcto', {
         state: {
-          total: totalPrice,
+          total,
           direccion: `${formulario.direccion}, ${formulario.comuna}`,
         },
       });
@@ -95,7 +99,7 @@ export default function Checkout() {
       return;
     }
 
-    finalizar();
+    finalizar(creaciones);
   };
 
   if (items.length === 0) {

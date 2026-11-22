@@ -111,7 +111,7 @@ public class DataInitializer {
                                 "Descuento especial para hogares con mayor consumo.",
                                 "VOL-015", 15, true,
                                 "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSRCy_n2hs5Ea6SM_6z-hf18XYC_6biqbxJYTjBBgB3LA&s=10",
-                                "2026-11-15"),
+                                "2030-12-31"),
                         oferta("OF-03", "Envío gratis en primera compra",
                                 "Para clientes nuevos de Chillán y Chillán Viejo.",
                                 null, 100, true,

@@ -129,6 +129,26 @@ describe('ProductEdit - CRUD Update producto', () => {
     expect(Number(numbers[2].value)).toBe(85);
   });
 
+  it('edita el precio base y no el precio con descuento', () => {
+    renderWithProviders(<RutasProducto />, { route: '/admin/productos/VOL-015/editar', session: ADMIN });
+
+    const numbers = screen.getAllByRole('spinbutton');
+    expect(Number(numbers[1].value)).toBe(27000);
+    expect(Number(numbers[1].value)).not.toBe(22950);
+  });
+
+  it('guarda el precio base sin reemplazarlo por el precio final', () => {
+    renderWithProviders(<RutasProducto />, { route: '/admin/productos/VOL-015/editar', session: ADMIN });
+
+    const numbers = screen.getAllByRole('spinbutton');
+    fireEvent.change(numbers[1], { target: { value: '28000' } });
+    fireEvent.click(screen.getByRole('button', { name: /Guardar cambios/ }));
+
+    const db = JSON.parse(localStorage.getItem('gasLaChispaDB'));
+    const producto = db.productos.find((p) => p.id === 'VOL-015');
+    expect(producto.precio).toBe(28000);
+  });
+
   it('permite editar el nombre y guardar sin errores', () => {
     renderWithProviders(<RutasProducto />, { route: '/admin/productos/VOL-011/editar', session: ADMIN });
 

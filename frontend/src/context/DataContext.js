@@ -1,15 +1,24 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import * as db from '../data/db';
 import { USE_LOCAL, api } from '../api';
+import { precioFinalProducto } from '../utils/ofertas';
 import { useAuth } from './AuthContext';
 
 const DataContext = createContext(null);
+
+function productosLocales() {
+  const ofertas = db.getOffers();
+  return db.getProducts().map((producto) => ({
+    ...producto,
+    precioFinal: precioFinalProducto(producto, ofertas),
+  }));
+}
 
 export function DataProvider({ children }) {
   const { user, isAuthenticated } = useAuth();
   const canSeeUsers = isAuthenticated && ['Administrador', 'Operadora'].includes(user?.rol);
 
-  const [productos, setProductos] = useState(() => (USE_LOCAL ? db.getProducts() : []));
+  const [productos, setProductos] = useState(() => (USE_LOCAL ? productosLocales() : []));
   const [categorias, setCategorias] = useState(() => (USE_LOCAL ? db.getCategories() : []));
   const [usuarios, setUsuarios] = useState(() => (USE_LOCAL ? db.getUsers() : []));
   const [pedidos, setPedidos] = useState(() => (USE_LOCAL ? db.getOrders() : []));
@@ -20,7 +29,7 @@ export function DataProvider({ children }) {
 
   const refresh = useCallback(async () => {
     if (USE_LOCAL) {
-      setProductos(db.getProducts());
+      setProductos(productosLocales());
       setCategorias(db.getCategories());
       setUsuarios(db.getUsers());
       setPedidos(db.getOrders());

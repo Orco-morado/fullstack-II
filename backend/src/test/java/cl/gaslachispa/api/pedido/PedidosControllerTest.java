@@ -319,4 +319,22 @@ class PedidosControllerTest extends ApiTestSupport {
                         .header("Authorization", bearer(token)))
                 .andExpect(status().isForbidden());
     }
+
+    @Test
+    void totalDelPedidoAplicaOfertaVigente() throws Exception {
+        String token = token("cliente@gmail.com", "cliente123");
+        Map<String, Object> pedido = new HashMap<>(pedidoNuevo());
+        pedido.put("productoId", "VOL-015");
+        pedido.put("producto", "Cilindro Normal 15 kg");
+        pedido.put("cantidad", 2);
+        pedido.put("total", 1);
+        String body = objectMapper.writeValueAsString(pedido);
+
+        mockMvc.perform(post("/api/v1/pedidos")
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.total").value(45900));
+    }
 }

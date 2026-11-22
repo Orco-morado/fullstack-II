@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import cl.gaslachispa.api.producto.PrecioService;
 import cl.gaslachispa.api.producto.Producto;
 import cl.gaslachispa.api.producto.ProductoRepository;
 import cl.gaslachispa.api.usuario.Usuario;
@@ -31,12 +32,14 @@ public class PedidoService {
     private final PedidoRepository pedidoRepository;
     private final UsuarioRepository usuarioRepository;
     private final ProductoRepository productoRepository;
+    private final PrecioService precioService;
 
     public PedidoService(PedidoRepository pedidoRepository, UsuarioRepository usuarioRepository,
-            ProductoRepository productoRepository) {
+            ProductoRepository productoRepository, PrecioService precioService) {
         this.pedidoRepository = pedidoRepository;
         this.usuarioRepository = usuarioRepository;
         this.productoRepository = productoRepository;
+        this.precioService = precioService;
     }
 
     public List<Pedido> listar(Authentication authentication) {
@@ -84,7 +87,7 @@ public class PedidoService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Stock insuficiente para el producto.");
         }
 
-        int precio = producto.getPrecio() == null ? 0 : producto.getPrecio();
+        int precio = precioService.precioFinal(producto);
         data.setProducto(producto.getNombre());
         data.setTotal(precio * data.getCantidad());
         data.setPago(normalizarPago(data.getPago()));

@@ -39,6 +39,8 @@ export default function ProductDetail() {
   }
 
   const stockEstado = estadoStock(producto.stock);
+  const precioFinal = producto.precioFinal ?? producto.precio;
+  const tieneDescuento = precioFinal < producto.precio;
   const relacionados = productos
     .filter((p) => p.categoria === producto.categoria && p.id !== producto.id)
     .slice(0, 3);
@@ -82,7 +84,10 @@ export default function ProductDetail() {
           </div>
 
           <h2 className="text-success fw-bold">
-            $ {producto.precio.toLocaleString('es-CL')}
+            {tieneDescuento && (
+              <s className="text-muted fs-5 me-2">$ {producto.precio.toLocaleString('es-CL')}</s>
+            )}
+            $ {precioFinal.toLocaleString('es-CL')}
             {producto.categoria === 'Granel' && <small className="text-muted fs-6"> /litro</small>}
           </h2>
 
@@ -154,19 +159,27 @@ export default function ProductDetail() {
         <section className="mt-5">
           <h4 className="fw-bold mb-3">Productos relacionados</h4>
           <Row className="g-3">
-            {relacionados.map((r) => (
-              <Col key={r.id} md={4}>
-                <Card className="h-100 shadow-sm border-0">
-                  <Card.Body>
-                    <Card.Title className="fw-bold">{r.nombre}</Card.Title>
-                    <p className="text-success fw-bold">$ {r.precio.toLocaleString('es-CL')}</p>
-                    <Button as={Link} to={`/productos/${r.id}`} size="sm" variant="outline-warning">
-                      Ver detalle
-                    </Button>
-                  </Card.Body>
-                </Card>
-              </Col>
-            ))}
+            {relacionados.map((r) => {
+              const precioRelacionado = r.precioFinal ?? r.precio;
+              return (
+                <Col key={r.id} md={4}>
+                  <Card className="h-100 shadow-sm border-0">
+                    <Card.Body>
+                      <Card.Title className="fw-bold">{r.nombre}</Card.Title>
+                      <p className="text-success fw-bold">
+                        {precioRelacionado < r.precio && (
+                          <s className="text-muted fs-6 me-2">$ {r.precio.toLocaleString('es-CL')}</s>
+                        )}
+                        $ {precioRelacionado.toLocaleString('es-CL')}
+                      </p>
+                      <Button as={Link} to={`/productos/${r.id}`} size="sm" variant="outline-warning">
+                        Ver detalle
+                      </Button>
+                    </Card.Body>
+                  </Card>
+                </Col>
+              );
+            })}
           </Row>
         </section>
       )}

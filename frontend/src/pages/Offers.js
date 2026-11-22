@@ -2,10 +2,11 @@ import React from 'react';
 import { Container, Row, Col, Card, Button, Badge } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { useData } from '../context/DataContext';
+import { estaVigente, formatearVigencia, precioConDescuento } from '../utils/ofertas';
 
 export default function Offers() {
   const { ofertas, productos } = useData();
-  const activas = ofertas.filter((o) => o.activo);
+  const activas = ofertas.filter((o) => o.activo && estaVigente(o));
 
   return (
     <Container className="my-5">
@@ -24,6 +25,7 @@ export default function Offers() {
             const producto = o.productoId
               ? productos.find((p) => p.id === o.productoId)
               : null;
+            const vigencia = formatearVigencia(o.vigencia);
             return (
               <Col key={o.id} md={6} lg={4}>
                 <Card className="h-100 shadow-sm border-0 overflow-hidden">
@@ -52,13 +54,15 @@ export default function Offers() {
                         </s>{' '}
                         <strong className="text-success">
                           ${' '}
-                          {Math.round(producto.precio * (1 - o.descuento / 100)).toLocaleString('es-CL')}
+                          {precioConDescuento(producto.precio, o.descuento).toLocaleString('es-CL')}
                         </strong>
                       </p>
                     )}
-                    <small className="text-muted mb-3">
-                      Válido hasta {new Date(o.vigencia).toLocaleDateString('es-CL')}
-                    </small>
+                    {vigencia && (
+                      <small className="text-muted mb-3">
+                        Válido hasta {vigencia}
+                      </small>
+                    )}
                     <div className="d-grid">
                       {producto ? (
                         <Button as={Link} to={`/productos/${producto.id}`} variant="warning" className="fw-bold">

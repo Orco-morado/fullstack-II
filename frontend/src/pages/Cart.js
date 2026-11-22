@@ -44,6 +44,9 @@ export default function Cart() {
                   <Col xs={9} md={4}>
                     <h6 className="fw-bold mb-1">{item.nombre}</h6>
                     <small className="text-muted d-block">
+                      {item.precioOriginal > item.precio && (
+                        <s className="me-1">$ {item.precioOriginal.toLocaleString('es-CL')}</s>
+                      )}
                       $ {item.precio.toLocaleString('es-CL')} c/u
                     </small>
                   </Col>

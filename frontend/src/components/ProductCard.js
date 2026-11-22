@@ -18,6 +18,8 @@ export function estadoStock(stock) {
 export default function ProductCard({ product, onAdd, showAddButton = true }) {
   const { addItem } = useCart();
   const stockEstado = estadoStock(product.stock);
+  const precioFinal = product.precioFinal ?? product.precio;
+  const tieneDescuento = precioFinal < product.precio;
 
   const handleAdd = () => {
     if (onAdd) {
@@ -49,7 +51,10 @@ export default function ProductCard({ product, onAdd, showAddButton = true }) {
         <Card.Text className="text-muted small flex-grow-1">{product.descripcion}</Card.Text>
         <small className="text-muted">Código: {product.id}</small>
         <p className="fs-5 fw-bold text-success mb-2">
-          $ {product.precio.toLocaleString('es-CL')}
+          {tieneDescuento && (
+            <s className="text-muted fs-6 me-2">$ {product.precio.toLocaleString('es-CL')}</s>
+          )}
+          $ {precioFinal.toLocaleString('es-CL')}
           {product.categoria === 'Granel' && <small className="text-muted"> /litro</small>}
         </p>
         <div className="d-grid gap-2">

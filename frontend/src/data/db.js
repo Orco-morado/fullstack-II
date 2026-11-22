@@ -44,7 +44,7 @@ const seedData = {
 
   ofertas: [
     { id: 'OF-01', titulo: '2x1 en Cilindros de 5 kg', descripcion: 'Lleva dos cilindros de 5 kg y paga solo uno. Válido solo los lunes.', productoId: 'VOL-005', descuento: 50, activo: true, imagen: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQoe4VQoRhPj4pnXVzeMl7dfOL_t0bSW9E7JPCUWHix0w&s=10', vigencia: '2026-10-31' },
-    { id: 'OF-02', titulo: '15% dcto. en Cilindro 15 kg', descripcion: 'Descuento especial para hogares con mayor consumo.', productoId: 'VOL-015', descuento: 15, activo: true, imagen: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSRCy_n2hs5Ea6SM_6z-hf18XYC_6biqbxJYTjBBgB3LA&s=10', vigencia: '2026-11-15' },
+    { id: 'OF-02', titulo: '15% dcto. en Cilindro 15 kg', descripcion: 'Descuento especial para hogares con mayor consumo.', productoId: 'VOL-015', descuento: 15, activo: true, imagen: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSRCy_n2hs5Ea6SM_6z-hf18XYC_6biqbxJYTjBBgB3LA&s=10', vigencia: '2030-12-31' },
     { id: 'OF-03', titulo: 'Envío gratis en primera compra',descripcion: 'Para clientes nuevos de Chillán y Chillán Viejo.', productoId: null, descuento: 100, activo: true, imagen: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRJRQ6Nv_yCS37RUzZMViwHElJCfdDFFC90BPc0g_Edog&s=10', vigencia: '2026-12-31' },
   ],
 

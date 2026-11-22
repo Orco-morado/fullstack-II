@@ -29,6 +29,13 @@ describe('ProductCard - renderizado y props', () => {
     expect(screen.getByText('Normal')).toBeTruthy();
   });
 
+  it('muestra el precio final y el original tachado cuando hay descuento', () => {
+    renderWithProviders(<ProductCard product={{ ...producto, precioFinal: 17000 }} />);
+
+    expect(screen.getByText('$ 17.000')).toBeTruthy();
+    expect(screen.getByText('$ 20.000')).toBeTruthy();
+  });
+
   it('recibe y ejecuta la función onClick enviada por props', () => {
     let llamadas = 0;
     let productoRecibido = null;

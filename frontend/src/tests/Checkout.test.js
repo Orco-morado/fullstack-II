@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { screen, fireEvent, within } from '@testing-library/react';
 import Checkout from '../pages/Checkout';
+import PaymentSuccess from '../pages/PaymentSuccess';
 import { renderWithProviders, clearStorage, seedCart } from './helpers';
 
 const ITEM = {
@@ -12,11 +13,19 @@ const ITEM = {
   cantidad: 2,
 };
 
+const ITEM2 = {
+  id: 'VOL-011',
+  nombre: 'Cilindro Normal 11 kg',
+  precio: 20000,
+  imagen: 'cilindro.png',
+  cantidad: 1,
+};
+
 function Rutas() {
   return (
     <Routes>
       <Route path="/checkout" element={<Checkout />} />
-      <Route path="/pago-correcto" element={<div>Pago Correcto</div>} />
+      <Route path="/pago-correcto" element={<PaymentSuccess />} />
       <Route path="/pago-error" element={<div>Pago Error</div>} />
       <Route path="/productos" element={<div>Catálogo</div>} />
     </Routes>
@@ -83,8 +92,18 @@ describe('Checkout - validación y eventos', () => {
 
     fireEvent.click(screen.getByText('Confirmar Pedido'));
 
-    expect(screen.getByText('Pago Correcto')).toBeTruthy();
+    expect(screen.getByText(/Pago correcto/)).toBeTruthy();
     expect(localStorage.getItem('gasLaChispaCart')).toBe('[]');
+  });
+
+  it('muestra en el pago correcto la suma de los totales de los pedidos', () => {
+    seedCart([ITEM, ITEM2]);
+    ({ container } = renderWithProviders(<Rutas />, { route: '/checkout' }));
+    llenarFormulario(container);
+
+    fireEvent.click(screen.getByText('Confirmar Pedido'));
+
+    expect(screen.getByText('$ 43.000')).toBeTruthy();
   });
 
   it('simula el error de pasarela con un correo que contiene "error"', () => {

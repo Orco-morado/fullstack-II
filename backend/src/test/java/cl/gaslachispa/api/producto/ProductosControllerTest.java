@@ -132,4 +132,41 @@ class ProductosControllerTest extends ApiTestSupport {
                         .header("Authorization", bearer(token)))
                 .andExpect(status().isForbidden());
     }
+
+    @Test
+    void obtenerProductoConOfertaVigenteDevuelvePrecioFinal() throws Exception {
+        mockMvc.perform(get("/api/v1/productos/VOL-015"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.precio").value(27000))
+                .andExpect(jsonPath("$.precioFinal").value(22950));
+    }
+
+    @Test
+    void obtenerProductoConOfertaVencidaMantienePrecioBase() throws Exception {
+        mockMvc.perform(get("/api/v1/productos/VOL-005"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.precio").value(11500))
+                .andExpect(jsonPath("$.precioFinal").value(11500));
+    }
+
+    @Test
+    void aplicarMayorDescuentoEntreOfertasVigentes() throws Exception {
+        String token = token("admin@gmail.com", "admin123");
+        String body = objectMapper.writeValueAsString(Map.of(
+                "titulo", "20% dcto. en Cilindro 15 kg",
+                "productoId", "VOL-015",
+                "descuento", 20,
+                "activo", true,
+                "vigencia", "2030-12-31"));
+
+        mockMvc.perform(post("/api/v1/ofertas")
+                        .header("Authorization", bearer(token))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/v1/productos/VOL-015"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.precioFinal").value(21600));
+    }
 }

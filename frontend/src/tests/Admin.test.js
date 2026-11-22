@@ -63,6 +63,13 @@ describe('Productos admin - listas y renderizado condicional', () => {
     expect(screen.getByText(/Lista \(7\)/)).toBeTruthy();
   });
 
+  it('muestra el precio base aunque el producto tenga una oferta vigente', () => {
+    renderWithProviders(<Rutas />, { route: '/admin/productos', session: ADMIN });
+
+    expect(screen.getByText('$ 27.000')).toBeTruthy();
+    expect(screen.queryByText('$ 22.950')).toBeNull();
+  });
+
   it('filtra la lista con la búsqueda de productos', () => {
     renderWithProviders(<Rutas />, { route: '/admin/productos', session: ADMIN });
 

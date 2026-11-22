@@ -24,9 +24,11 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 public class ProductosController {
 
     private final ProductoRepository productoRepository;
+    private final PrecioService precioService;
 
-    public ProductosController(ProductoRepository productoRepository) {
+    public ProductosController(ProductoRepository productoRepository, PrecioService precioService) {
         this.productoRepository = productoRepository;
+        this.precioService = precioService;
     }
 
     @GetMapping
@@ -43,13 +45,13 @@ public class ProductosController {
                             || contiene(p.getId(), q))
                     .toList();
         }
-        return productos;
+        return productos.stream().map(this::decorar).toList();
     }
 
     @GetMapping("/{id}")
     public Producto obtener(@PathVariable String id) {
-        return productoRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado."));
+        return decorar(productoRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado.")));
     }
 
     @PostMapping
@@ -78,7 +80,7 @@ public class ProductosController {
         if (producto.getActivo() == null) {
             producto.setActivo(true);
         }
-        return productoRepository.save(producto);
+        return decorar(productoRepository.save(producto));
     }
 
     @PutMapping("/{id}")
@@ -110,7 +112,7 @@ public class ProductosController {
         if (changes.getActivo() != null) {
             producto.setActivo(changes.getActivo());
         }
-        return productoRepository.save(producto);
+        return decorar(productoRepository.save(producto));
     }
 
     @DeleteMapping("/{id}")
@@ -122,6 +124,11 @@ public class ProductosController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado.");
         }
         productoRepository.deleteById(id);
+    }
+
+    private Producto decorar(Producto producto) {
+        producto.setPrecioFinal(precioService.precioFinal(producto));
+        return producto;
     }
 
     private boolean contiene(String value, String q) {

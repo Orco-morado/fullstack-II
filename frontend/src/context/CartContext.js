@@ -32,7 +32,8 @@ export function CartProvider({ children }) {
         {
           id: product.id,
           nombre: product.nombre,
-          precio: product.precio,
+          precio: product.precioFinal ?? product.precio,
+          precioOriginal: product.precio,
           imagen: product.imagen,
           cantidad,
         },
